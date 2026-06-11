@@ -489,9 +489,10 @@ function homeTab(){
  '<button class="btn wk" onclick="go(\'train\')"><span style="letter-spacing:2px">TODAY\'S WORKOUT</span>'+
    '<span class="xs" style="font-weight:800">'+(menuKey?MENUS[menuKey].name+(wkDone?' ✓':''):'休養日')+'　→</span></button>'+
  '<div class="card"><h3>有酸素・運動</h3>'+
-   (o.cardio.length?o.cardio.map((cd,i)=>'<div class="fooditem"><span>'+cd.type+'　<b>'+cd.min+'分</b></span><button class="delx" onclick="delCardio('+i+')">✕</button></div>').join(''):'<div class="muted small">記録なし</div>')+
+   (o.cardio.length?o.cardio.map((cd,i)=>'<div class="fooditem"><span>'+cd.type+'　<b class="num">'+cd.min+'分</b>　<span class="xs" style="color:var(--accent)">約'+cardioKcal(cd.type,cd.min)+'kcal消費</span></span><button class="delx" onclick="delCardio('+i+')">✕</button></div>').join(''):'<div class="muted small">記録なし</div>')+
    '<div class="row" style="margin-top:8px"><select id="cdtype"><option>インクラインウォーク</option><option>ランニング</option><option>バイク</option><option>ウォーキング</option><option>水泳</option><option>その他</option></select>'+
    '<input type="number" id="cdmin" placeholder="分" inputmode="numeric" style="width:64px"><button class="mini" onclick="addCardio()">追加</button></div>'+
+   '<div class="xs muted" style="margin-top:8px">消費kcalは参考値（実測より多く出がち）。食べていい量には足さない設計です。運動は赤字の深掘りと筋肉維持のため💪</div>'+
  '</div>';
 }
 
@@ -499,6 +500,9 @@ window.setVal=function(k,v){const o=D(curDate);const n=parseFloat(v);o[k]=isNaN(
 window.addWater=function(ml){const o=D(curDate);o.water=Math.max(0,(o.water||0)+ml);saveR();};
 window.addCardio=function(){const t=document.getElementById('cdtype').value,m=parseInt(document.getElementById('cdmin').value);
  if(!m){toast('分数を入力してください');return;}D(curDate).cardio.push({type:t,min:m});saveR();};
+const METS={'インクラインウォーク':6,'ランニング':9.8,'バイク':7,'ウォーキング':3.5,'水泳':8,'その他':5};
+function cardioKcal(type,min,ds){const lw=latestWeight(ds||curDate);const w=lw?lw.w:S.profile.startWeight;
+ return Math.round((METS[type]||5)*1.05*w*min/60);}
 window.delCardio=function(i){D(curDate).cardio.splice(i,1);saveR();};
 
 /* ================= 食事 ================= */
@@ -729,7 +733,7 @@ window.weeklyReview=function(){
     if(!sets.length)return null;return ex+' '+sets.map(s=>(s.w!==''&&s.w!=null?s.w:'-')+'x'+(s.r!==''&&s.r!=null?s.r:'-')).join('/');}).filter(Boolean);
    if(parts.length)wk=(MENUS[o.wk.menu]?MENUS[o.wk.menu].name:'')+'：'+parts.join('、');
   }
-  const cardio=(o.cardio||[]).map(c=>c.type+c.min+'分').join('、')||'なし';
+  const cardio=(o.cardio||[]).map(c=>c.type+c.min+'分(約'+cardioKcal(c.type,c.min,ds)+'kcal)').join('、')||'なし';
   lines.push(fmtShort(ds)+'｜体重'+(o.weight!=null?o.weight+'kg':'未計測')+(o.bf!=null?'/'+o.bf+'%':'')+
    '｜摂取'+t.k+'kcal P'+t.p+' F'+t.f+' C'+t.c+'（スイーツ'+t.sw+'kcal）'+
    '｜水分'+((o.water||0)/1000).toFixed(1)+'L｜睡眠'+(o.sleep!=null?o.sleep+'h':'未記録')+
