@@ -351,7 +351,7 @@ const EXDB={
 function load(){try{return JSON.parse(localStorage.getItem(LS))}catch(e){return null}}
 let S=load()||{profile:Object.assign({},DEF_PROFILE),days:{},custom:[]};
 if(!S.profile)S.profile=Object.assign({},DEF_PROFILE);
-if(!S.days)S.days={}; if(!S.custom)S.custom=[];
+if(!S.days)S.days={}; if(!S.custom)S.custom=[]; if(!S.sets)S.sets=[];
 /* Day 0 シード */
 (function(){const sd=S.profile.startDate;
  if(!S.days[sd])S.days[sd]={meals:[],cardio:[]};
@@ -389,6 +389,11 @@ function streak(){let n=0;const d=new Date(curDate+'T00:00:00');
   const has=o&&(o.weight!=null||o.water||(o.meals&&o.meals.length)||(o.wk&&Object.keys(o.wk.logs||{}).length));
   if(has){n++;d.setDate(d.getDate()-1);}else break; if(n>999)break;}
  return n;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function ma7(pts){return pts.map(function(p){const t=p[0];
+ const win=pts.filter(function(q){return q[0]<=t&&q[0]>=t-6*86400000;});
+ return [t,win.reduce(function(a,b){return a+b[1];},0)/win.length];});}
+function weightAt(ds){const lw=latestWeight(ds);return lw?lw.w:null;}
 
 /* ================= チャート ================= */
 function lineChart(series,h){h=h||150;const w=340,pl=36,pr=10,pt=10,pb=20;
@@ -425,6 +430,12 @@ function coachMsg(o,t,P){
  if(o.weight==null)return 'まずは今朝の体重を入力しよう！毎朝起きてすぐ・同じ条件で測るのがコツだ⚖️';
  if(t.k>P.kcal)return 'カロリーが'+(t.k-P.kcal)+'kcalオーバー…！夜は軽めにして、明日インクラインウォーク30分でリカバリーしましょう🏃';
  if(t.sw>P.sweets)return 'スイーツ枠を'+(t.sw-P.sweets)+'kcal超えました🍰 今日はここでストップ！明日は枠内で楽しみましょう';
+ const lwc=latestWeight(curDate);const wNow=lwc?lwc.w:P.startWeight;
+ const sugg=Math.round((wNow*32.6-450)/50)*50;
+ if(P.kcal-sugg>=100)return '体重が落ちて維持カロリーも下がってきたぞ。摂取目標を'+P.kcal.toLocaleString()+'→'+sugg.toLocaleString()+'kcalに締め直そう。<br><a class="glink" onclick="applyKcal('+sugg+')">→ ワンタップで更新する</a>';
+ const d14=new Date(curDate+'T00:00:00');d14.setDate(d14.getDate()-14);const lw14=latestWeight(fmt(d14));
+ const nEntries=Object.keys(S.days).filter(function(dd){return S.days[dd].weight!=null;}).length;
+ if(nEntries>=10&&lw14&&Math.abs(wNow-lw14.w)<0.3&&wNow>P.goalWeight+0.5)return 'この2週間、体重が止まっているな。停滞は体が慣れた証拠で、必ず抜ける。睡眠と水分を整えて、次の面談でリフィードか−100kcalを相談しよう🔥';
  if(isToday&&hr>=18&&pLeft>40)return 'たんぱく質があと'+Math.round(pLeft)+'g足りません！夕食に鶏むね＋プロテインで巻き返しましょう💪';
  if(isToday&&hr>=15&&(o.water||0)<P.water/2)return '水分がまだ'+((o.water||0)/1000).toFixed(1)+'Lです。こまめに「+250ml」を押していきましょう💧';
  if(pLeft<=0)return 'たんぱく質'+P.p+'gクリア！すばらしい！この積み重ねが鈴木亮平への最短ルートだ🔥';
@@ -462,7 +473,7 @@ function homeTab(){
      '<span class="pill '+(diff<=0.2?'ok':'bad')+'">'+(diff<=0?'ライン先行':'ライン遅れ+'+diff.toFixed(1))+'</span>'+
      '<span class="pill dim">残り'+daysLeft()+'日</span>'+
    '</div>'+
-   '<div style="margin:8px -4px 0">'+lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:wEntries,color:'#EFCF7F',dots:1}],150)+'</div>'+
+   '<div style="margin:8px -4px 0">'+lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:ma7(wEntries),color:'#8A7B4D'},{pts:wEntries,color:'#EFCF7F',dots:1}],150)+'</div>'+
  '</div>'+
  '<div class="grid2" style="margin-top:10px;margin-bottom:12px">'+
    '<div class="tile"><div class="tl">体脂肪率</div><div class="row" style="justify-content:center"><input class="tin" type="number" step="0.1" inputmode="decimal" placeholder="--.-" value="'+(o.bf!=null?o.bf:'')+'" onchange="setVal(\'bf\',this.value)"><span class="tu">%</span></div>'+
@@ -485,7 +496,11 @@ function homeTab(){
    '<div class="bar sweet" style="margin-top:4px"><i style="width:'+Math.min(100,t.sw/P.sweets*100)+'%"></i></div>'+
  '</div>'+
  '<div class="card"><div class="coach"><div class="cavatar">✳&#xFE0E;</div><div class="cbubble">'+coachMsg(o,t,P)+
-   '<div style="margin-top:6px"><a class="glink" onclick="weeklyReview()">週次面談レポートをコピー →</a></div></div></div></div>'+
+   '<div style="margin-top:6px"><a class="glink" onclick="weeklyReview()">週次面談レポートをコピー →</a>　<a class="glink" onclick="editMission()">ミッション編集 →</a></div></div></div></div>'+
+ (S.mission&&S.mission.text?'<div class="card" style="border-color:var(--accent2)" onclick="editMission()">'+
+   '<h3 style="color:var(--accent)">⚡ 今週のミッション</h3>'+
+   '<div style="font-weight:700;line-height:1.7">'+esc(S.mission.text)+'</div>'+
+   '<div class="xs muted" style="margin-top:5px">'+fmtShort(S.mission.setAt)+' 設定・タップで編集</div></div>':'')+
  '<button class="btn wk" onclick="go(\'train\')"><span style="letter-spacing:2px">TODAY\'S WORKOUT</span>'+
    '<span class="xs" style="font-weight:800">'+(menuKey?MENUS[menuKey].name+(wkDone?' ✓':''):'休養日')+'　→</span></button>'+
  '<div class="card"><h3>有酸素・運動</h3>'+
@@ -512,7 +527,8 @@ function foodTab(){
  const groups=MEAL_NAMES.map(mn=>{
   const items=o.meals.map((m,i)=>({m:m,i:i})).filter(x=>x.m.meal===mn);
   if(!items.length)return '';
-  return '<div class="mealgrp"><div class="small" style="font-weight:800;color:var(--accent)">'+mn+'</div>'+
+  return '<div class="mealgrp"><div class="row between"><div class="small" style="font-weight:800;color:var(--accent)">'+mn+'</div>'+
+   '<button class="delx" style="font-size:11px" onclick="saveSet(\''+mn+'\')">⚡ セット保存</button></div>'+
    items.map(x=>'<div class="fooditem"><div><div style="font-size:14px;font-weight:600">'+(x.m.sw?'🍰 ':'')+x.m.n+'</div>'+
     '<div class="xs muted">'+Math.round(x.m.k*x.m.q)+'kcal　P'+Math.round(x.m.p*x.m.q)+' F'+Math.round(x.m.f*x.m.q)+' C'+Math.round(x.m.c*x.m.q)+'</div></div>'+
     '<div class="qty"><button onclick="chgQty('+x.i+',-0.5)">−</button><span style="font-size:13px;font-weight:700">'+x.m.q+'</span><button onclick="chgQty('+x.i+',0.5)">＋</button>'+
@@ -526,6 +542,9 @@ function foodTab(){
    '<span style="color:var(--f)">F'+t.f+'<span class="muted xs">/'+P.f+'</span></span>'+
    '<span style="color:var(--c)">C'+t.c+'<span class="muted xs">/'+P.c+'</span></span></div>'+
   '<div class="bar" style="margin-top:8px"><i style="width:'+Math.min(100,t.k/P.kcal*100)+'%"></i></div>'+
+  (S.sets.length?'<div class="chips" style="margin-top:10px">'+S.sets.map((stt,i)=>
+   '<span class="chip" onclick="applySet('+i+')">⚡ '+esc(stt.name)+
+   '<span style="margin-left:7px;color:var(--muted)" onclick="event.stopPropagation();delSetMeal('+i+')">✕</span></span>').join('')+'</div>':'')+
   (groups||'<div class="muted small" style="margin-top:10px">まだ記録がありません</div>')+
   '<div class="row" style="margin-top:12px;gap:8px">'+
    '<button class="btn" style="flex:2" onclick="openFoodModal()">＋ 食品を追加</button>'+
@@ -560,6 +579,13 @@ window.addFood=function(id){const f=allFoods().find(x=>x.id===id);if(!f)return;
  save();toast(f.n+' を追加 ✓');};
 window.chgQty=function(i,d){const m=D(curDate).meals[i];m.q=Math.max(0.5,Math.round((m.q+d)*2)/2);saveR();};
 window.delMeal=function(i){D(curDate).meals.splice(i,1);saveR();};
+window.saveSet=function(mn){const items=D(curDate).meals.filter(m=>m.meal===mn);
+ if(!items.length){toast('保存する食事がありません');return;}
+ const name=prompt('セット名（例：いつもの朝食）',mn==='朝'?'いつもの朝食':'');if(!name)return;
+ S.sets.push({name:name,meal:mn,items:JSON.parse(JSON.stringify(items))});save();render();toast('マイセット「'+name+'」を保存 ⚡');};
+window.applySet=function(i){const st=S.sets[i];if(!st)return;const o=D(curDate);
+ st.items.forEach(m=>o.meals.push(JSON.parse(JSON.stringify(m))));saveR();toast(st.name+' を追加 ✓');};
+window.delSetMeal=function(i){if(!confirm('マイセット「'+S.sets[i].name+'」を削除しますか？'))return;S.sets.splice(i,1);saveR();};
 window.copyYesterday=function(){const d=new Date(curDate+'T00:00:00');d.setDate(d.getDate()-1);const y=fmt(d);
  const ym=(S.days[y]&&S.days[y].meals)||[];if(!ym.length){toast('昨日の記録がありません');return;}
  const o=D(curDate);ym.forEach(m=>o.meals.push(JSON.parse(JSON.stringify(m))));saveR();toast('昨日の食事をコピーしました');};
@@ -661,8 +687,8 @@ function graphTab(){
   .map(d=>{let top=0;S.days[d].wk.logs[exSel].forEach(s=>{if(s.w!==''&&s.w!=null&&s.w>top)top=s.w;});return [+new Date(d),top];}):[];
  if(photosCache===null&&db)loadPhotos();
  return ''+
- '<div class="card"><h3>体重　<span class="xs muted">点線=目標ライン</span></h3>'+
-  lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:wPts,color:'#EFCF7F',dots:1}],170)+'</div>'+
+ '<div class="card"><h3>体重　<span class="xs muted">点線=目標 / 細線=7日平均</span></h3>'+
+  lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:ma7(wPts),color:'#8A7B4D'},{pts:wPts,color:'#EFCF7F',dots:1}],170)+'</div>'+
  '<div class="card"><h3>体脂肪率</h3>'+
   lineChart([{pts:gb,color:'#5C564A',dash:1},{pts:bPts,color:'#6B97C2',dots:1}],150)+'</div>'+
  '<div class="card"><h3>種目の重量推移</h3>'+
@@ -672,6 +698,14 @@ function graphTab(){
  '<div class="card"><h3>進捗写真　<span class="xs muted">月1回・同条件で</span></h3>'+
   '<label class="ghost" style="display:block;text-align:center;margin-bottom:10px">＋ '+fmtShort(curDate)+' の写真を追加'+
   '<input type="file" accept="image/*" style="display:none" onchange="addPhoto(event)"></label>'+
+  (photosCache&&photosCache.length>=2?(function(){
+    const a=photosCache[0],b=photosCache[photosCache.length-1];
+    const ua=URL.createObjectURL(a.blob),ub=URL.createObjectURL(b.blob);
+    const wa=weightAt(a.date),wb=weightAt(b.date);
+    return '<div class="grid2" style="margin-bottom:10px">'+
+     '<div class="ph"><img src="'+ua+'" style="height:200px"><div class="pd"><span>BEFORE '+fmtShort(a.date)+'</span><span class="num">'+(wa?wa+'kg':'')+'</span></div></div>'+
+     '<div class="ph" style="border-color:var(--accent2)"><img src="'+ub+'" style="height:200px"><div class="pd"><span>NOW '+fmtShort(b.date)+'</span><span class="num">'+(wb?wb+'kg':'')+'</span></div></div>'+
+    '</div>';})():'')+
   '<div class="photogrid">'+(photosCache&&photosCache.length?photosCache.map(p=>{
     const u=URL.createObjectURL(p.blob);
     return '<div class="ph"><img src="'+u+'"><div class="pd"><span>'+fmtShort(p.date)+'</span><span onclick="delPhoto('+p.id+')">🗑</span></div></div>';
@@ -712,6 +746,12 @@ function setTab(){
  '<div class="xs muted" style="text-align:center;padding:6px 0 18px;font-family:var(--serif);font-style:italic">ムキムキ計画 vol.1 — '+P.name+' × Claude</div>';
 }
 window.setProf=function(k,v){const n=parseFloat(v);if(!isNaN(n))S.profile[k]=n;saveR();};
+window.applyKcal=function(k){const P=S.profile;P.kcal=k;
+ P.c=Math.max(120,Math.round((k-P.p*4-P.f*9)/4/5)*5);saveR();
+ toast('目標を'+k.toLocaleString()+'kcal（糖質C'+P.c+'g）に更新しました');};
+window.editMission=function(){const cur=S.mission?S.mission.text:'';
+ const t=prompt('今週のミッション（週次面談でのClaudeの指示を貼ると、1週間ホームに表示されます）',cur);
+ if(t===null)return;S.mission=t.trim()?{text:t.trim(),setAt:curDate}:null;saveR();};
 window.setProfStr=function(k,v){if(v)S.profile[k]=v;saveR();};
 window.exportJson=function(){const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
@@ -747,7 +787,8 @@ window.weeklyReview=function(){
  '【プロフィール】34歳男性 177cm。開始時('+P.startDate+') '+P.startWeight+'kg/体脂肪'+P.startBF+'%。\n'+
  '【目標】'+P.goalDate+'までに'+P.goalWeight+'kg/体脂肪'+P.goalBF+'%（鈴木亮平のような体）。週-0.3kgペース。\n'+
  '【日次目標】'+P.kcal+'kcal、P'+P.p+'g/F'+P.f+'g/C'+P.c+'g、水分'+(P.water/1000)+'L、睡眠'+P.sleep+'h以上。\n'+
- '【現在地】最新体重'+w+'kg（理想ライン'+line.toFixed(1)+'kg、差'+(w-line>=0?'+':'')+(w-line).toFixed(1)+'kg）\n\n'+
+ '【現在地】最新体重'+w+'kg（理想ライン'+line.toFixed(1)+'kg、差'+(w-line>=0?'+':'')+(w-line).toFixed(1)+'kg）\n'+
+ '【今週のミッション】'+(S.mission&&S.mission.text?S.mission.text:'未設定')+'\n\n'+
  '【今週の記録】\n'+lines.join('\n');
  copyText(txt);
 };
