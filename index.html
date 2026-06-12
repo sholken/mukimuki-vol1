@@ -122,8 +122,11 @@ nav button.on{color:var(--accent);}
 .foodrow .meta{font-size:11px;color:var(--muted);font-family:var(--num);}
 .addbtn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#1A1407;border-radius:10px;
   width:34px;height:34px;font-size:19px;font-weight:800;flex:0 0 auto;}
-#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#F2EFE6;color:#1A1407;
-  padding:10px 18px;border-radius:99px;font-size:13px;font-weight:700;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none;}
+#toast{position:fixed;left:50%;top:45%;transform:translate(-50%,-50%) scale(.95);background:#F2EFE6;color:#1A1407;
+  padding:16px 26px;border-radius:16px;font-size:15px;font-weight:800;z-index:99;opacity:0;
+  transition:opacity .25s,transform .25s;pointer-events:none;border:2px solid var(--accent2);
+  box-shadow:0 8px 30px rgba(0,0,0,.6);text-align:center;max-width:80vw;}
+#toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
 .guide li{margin-bottom:6px;font-size:14px;line-height:1.6;}
 .guide .tip{color:var(--accent);}
 table.rep{width:100%;border-collapse:collapse;font-size:12px;}
@@ -471,7 +474,7 @@ function homeTab(){
    '<div class="row" style="justify-content:center;gap:6px;flex-wrap:wrap">'+
      (lw7?'<span class="pill dim">'+(wk7<=0?'▼':'▲')+' 週'+(wk7>0?'+':'')+wk7.toFixed(1)+'kg</span>':'')+
      '<span class="pill dim">目標まで'+(remain>0?'−':'+')+Math.abs(remain).toFixed(1)+'kg</span>'+
-     '<span class="pill '+(diff<=0.2?'ok':'bad')+'">'+(diff<=0?'ライン先行':'ライン遅れ+'+diff.toFixed(1))+'</span>'+
+     '<span class="pill '+(diff<=0.2?'ok':'bad')+'">'+(diff<-0.2?'ライン先行 '+Math.abs(diff).toFixed(1):(diff<=0.2?'ライン上 ✓':'ライン遅れ +'+diff.toFixed(1)))+'</span>'+
      '<span class="pill dim">残り'+daysLeft()+'日</span>'+
    '</div>'+
    '<div style="margin:8px -4px 0">'+lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:ma7(wEntries),color:'#8A7B4D'},{pts:wEntries,color:'#EFCF7F',dots:1}],150)+'</div>'+
@@ -613,12 +616,13 @@ window.saveMyFood=function(){const n=document.getElementById('mfn').value.trim()
  sw=document.getElementById('mfsw').checked?1:0;
  if(!n){toast('名前を入力してください');return;}
  if(myEditIdx!=null&&S.custom[myEditIdx]){const m=S.custom[myEditIdx];m.n=n;m.k=k;m.p=p;m.f=f;m.c=c;m.sw=sw;
-  save();closeModal();toast('マイ食品を更新しました ✓');}
+  save();closeModal();toast('✓ 「'+n+'」を更新しました');}
  else{S.custom.push({id:'m'+Date.now(),n:n,k:k,p:p,f:f,c:c,sw:sw});
-  save();closeModal();toast('マイ食品を登録しました');}
+  save();closeModal();toast('✓ 「'+n+'」を登録しました');}
  myEditIdx=null;};
-window.delMyFood=function(i){if(!confirm('マイ食品「'+S.custom[i].n+'」を削除しますか？\n（過去の食事記録はそのまま残ります）'))return;
- S.custom.splice(i,1);save();openMyFood();};
+window.delMyFood=function(i){const nm=S.custom[i].n;
+ if(!confirm('マイ食品「'+nm+'」を削除しますか？\n（過去の食事記録はそのまま残ります）'))return;
+ S.custom.splice(i,1);save();openMyFood();toast('✓ 「'+nm+'」を削除しました');};
 window.openQuickFood=function(){const m=mealSel||guessMeal();
  openModal('<h3>直接入力　<span class="xs muted">'+m+'に追加・リストには登録しない</span></h3>'+
  '<label class="fld">名前（任意）<input type="text" id="qn" placeholder="例：飲み会の唐揚げ" style="width:100%"></label>'+
@@ -860,8 +864,8 @@ function fallbackCopy(t){openModal('<h3>レポートを全選択してコピー<
 /* ================= 共通UI ================= */
 function openModal(html){document.getElementById('sheet').innerHTML=html;document.getElementById('modal').classList.add('show');}
 window.closeModal=function(){document.getElementById('modal').classList.remove('show');if(tab==='food')render();};
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.opacity=1;
- clearTimeout(toast._t);toast._t=setTimeout(function(){el.style.opacity=0;},1800);}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+ clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove('show');},2200);}
 const TABS={home:homeTab,food:foodTab,train:trainTab,graph:graphTab,set:setTab};
 function ic(paths){return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+paths+'</svg>';}
 const NAV=[
