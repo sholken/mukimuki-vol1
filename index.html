@@ -567,7 +567,9 @@ function renderFoodModal(){
  openModal('<h3>食品を追加　<span class="xs muted">'+fmtShort(curDate)+'</span></h3>'+
   '<div class="chips" style="margin-bottom:8px">'+MEAL_NAMES.map(m=>'<button class="chip '+(mealSel===m?'on':'')+'" onclick="mealSel=\''+m+'\';renderFoodModal()">'+m+'</button>').join('')+'</div>'+
   '<input type="text" placeholder="検索" value="'+foodQ+'" oninput="foodQ=this.value;renderFoodList()" style="width:100%;margin-bottom:8px">'+
-  '<button class="ghost" style="width:100%;margin-bottom:8px" onclick="openQuickFood()">✎ 直接入力（リストに登録せず追加）</button>'+
+  '<div class="row" style="margin-bottom:8px;gap:6px">'+
+  '<button class="ghost" style="flex:1" onclick="openQuickFood()">✎ 直接入力</button>'+
+  '<button class="ghost" style="flex:1" onclick="photoEstimate()">📷 写真でPFC推定</button></div>'+
   '<div class="chips" id="fcats">'+FOOD_CATS.map(c=>'<button class="chip '+(foodCat===c[0]?'on':'')+'" onclick="foodCat=\''+c[0]+'\';renderFoodModal()">'+c[1]+'</button>').join('')+'</div>'+
   '<div id="foodlist">'+foodListHtml(list)+'</div>');
 }
@@ -633,7 +635,32 @@ window.openQuickFood=function(){const m=mealSel||guessMeal();
  '<label class="fld">糖質g<input type="number" id="qc" inputmode="decimal" style="width:100%"></label></div>'+
  '<label class="row small" style="margin-top:10px;gap:6px"><input type="checkbox" id="qsw" style="width:auto">スイーツ枠に計上する</label>'+
  '<button class="btn" style="margin-top:12px" onclick="quickAdd()">この食事に追加</button>'+
- '<div class="xs muted" style="margin-top:8px">分からない時はkcalだけでもOK。イレギュラー飯はこれで十分です。</div>');};
+ '<button class="ghost" style="width:100%;margin-top:8px" onclick="pasteEstimate()">📋 Claudeの推定を貼り付けて自動入力</button>'+
+ '<div class="xs muted" style="margin-top:8px">分からない時はkcalだけでもOK。写真推定は「📷 写真でPFC推定」から。</div>');};
+window.photoEstimate=function(){
+ const txt='この写真の食事の摂取カロリーとPFC（タンパク質・脂質・糖質）を推定してください。日本の一般的な盛り付け量を基準に、過小評価せず現実的に見積もること。複数の品があれば合計してください。\n回答は説明なしで、次の1行フォーマットだけで返してください：\n【料理名 / 000kcal / P:00g / F:00g / C:00g】';
+ openModal('<h3>写真でPFC推定（Claude連携）</h3>'+
+ '<div class="small" style="line-height:2">'+
+ '① 推定用プロンプトをコピーしました ✓<br>'+
+ '② <b>Claudeアプリ</b>を開き、食事の写真を添付して貼り付け→送信<br>'+
+ '③ 返ってきた【…】の1行をコピー<br>'+
+ '④ ここに戻って下のボタン → 「📋 貼り付けて自動入力」</div>'+
+ '<button class="btn" style="margin-top:12px" onclick="openQuickFood()">直接入力を開く</button>');
+ copyText(txt);};
+window.pasteEstimate=function(){
+ if(!(navigator.clipboard&&navigator.clipboard.readText)){toast('このブラウザでは自動入力が使えません。手入力してください');return;}
+ navigator.clipboard.readText().then(function(t){
+  const k=t.match(/([\d,.]+)\s*kcal/i),p=t.match(/P[:：]\s*([\d.]+)/i),
+   f=t.match(/F[:：]\s*([\d.]+)/i),c=t.match(/C[:：]\s*([\d.]+)/i),
+   nm=t.match(/【([^/／】]+)[/／]/);
+  if(!k&&!p){toast('推定フォーマット【…kcal/P:…】が見つかりませんでした');return;}
+  if(nm)document.getElementById('qn').value=nm[1].trim();
+  if(k)document.getElementById('qk').value=parseFloat(k[1].replace(/,/g,''));
+  if(p)document.getElementById('qp').value=parseFloat(p[1]);
+  if(f)document.getElementById('qf').value=parseFloat(f[1]);
+  if(c)document.getElementById('qc').value=parseFloat(c[1]);
+  toast('✓ 推定値を入力しました。確認して追加！');
+ },function(){toast('クリップボードを読めませんでした');});};
 window.quickAdd=function(){
  const n=document.getElementById('qn').value.trim()||'直接入力';
  const k=parseFloat(document.getElementById('qk').value)||0,p=parseFloat(document.getElementById('qp').value)||0,
