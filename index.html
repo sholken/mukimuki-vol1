@@ -870,7 +870,8 @@ window.weeklyReview=function(){
  const txt='あなたは私の専属パーソナルトレーナーです（ライザップ式：結果にコミット、厳しくも温かく）。\n'+
  '以下の1週間のデータを分析して、次の5点を簡潔に出してください。\n'+
  '1. 今週の評価（100点満点と一言）\n2. 良かった点\n3. 問題点とその原因分析\n'+
- '4. 来週の具体的な指示（食事・トレーニング・生活で各1つ以上、数値で）\n5. 停滞している場合の打ち手\n\n'+
+ '4. 来週の具体的な指示（食事・トレーニング・生活で各1つ以上、数値で）\n5. 停滞している場合の打ち手\n'+
+ '※このメッセージに食事や体の写真が添付されていたら、数値に表れない食事の質（野菜・タンパク源・加工度・外食の内容）や体の変化も必ず評価に含めてください。\n\n'+
  '【プロフィール】34歳男性 177cm。開始時('+P.startDate+') '+P.startWeight+'kg/体脂肪'+P.startBF+'%。\n'+
  '【目標】'+P.goalDate+'までに'+P.goalWeight+'kg/体脂肪'+P.goalBF+'%（鈴木亮平のような体）。週-0.3kgペース。\n'+
  '【日次目標】'+P.kcal+'kcal、P'+P.p+'g/F'+P.f+'g/C'+P.c+'g、水分'+(P.water/1000)+'L、睡眠'+P.sleep+'h以上。\n'+
@@ -878,6 +879,13 @@ window.weeklyReview=function(){
  '【今週のミッション】'+(S.mission&&S.mission.text?S.mission.text:'未設定')+'\n\n'+
  '【今週の記録】\n'+lines.join('\n');
  copyText(txt);
+ openModal('<h3>週次面談の準備ができました</h3>'+
+  '<div class="small" style="line-height:2">'+
+  '① レポートをコピーしました ✓<br>'+
+  '② <b>Claudeアプリ</b>を開いて貼り付け→送信<br>'+
+  '③ <b>今週の食事写真があれば一緒に添付</b>すると、数値に出ない「食事の質」まで評価してくれます📷<br>'+
+  '④ 返ってきた来週の指示は「ミッション編集」に貼って常時表示</div>'+
+  '<div class="xs muted" style="margin-top:10px">食事写真はアプリに保存せず、普段どおりカメラロールでOK。撮るだけでも食べ方が変わります。</div>');
 };
 function copyText(t){
  if(navigator.clipboard&&navigator.clipboard.writeText){
