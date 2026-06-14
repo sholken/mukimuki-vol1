@@ -265,19 +265,20 @@ const MENUS={
  uB:{name:'上半身B（引き）',ex:['懸垂','ダンベルロウ','シーテッドケーブルロウ','フェイスプル','バーベルカール','ハンギングレッグレイズ']},
  dB:{name:'下半身B（尻ハム）',ex:['ルーマニアンデッドリフト','ブルガリアンスクワット','レッグカール','ヒップスラスト','カーフレイズ(座位)']},
  core:{name:'有酸素＋コア',ex:['インクラインウォーク','プランク','サイドプランク','バイシクルクランチ','デッドバグ']},
+ rest:{name:'レスト（休養）',ex:[]},
 };
 const BYDAY={1:'uA',2:'dA',4:'uB',5:'dB',6:'core'};
 const EXDB={
 'ベンチプレス':{t:'大胸筋・三角筋前部・三頭筋',sr:'4セット×8-10回',
  steps:['ベンチに仰向け、目の位置がバーの真下','手幅は肩幅の1.5倍（81cmラインに薬指）','肩甲骨を寄せて下げ、軽くアーチ','肘を約45°に開き胸の下部へゆっくり下ろす','胸に触れたら足で地面を押しながら一気に挙上','肘をロックアウトして1レップ'],
  tips:['お尻はベンチから絶対に浮かさない','下ろし2-3秒・上げ1秒のテンポ','一人ならセーフティバー必須','WU：バーのみ×10→40%×8→60%×5']},
-'インクラインダンベルプレス':{t:'大胸筋上部・三角筋前部',sr:'3セット×10-12回',
+'インクラインダンベルプレス':{t:'大胸筋上部・三角筋前部',sr:'3セット×10-12回',db:1,
  steps:['ベンチを30°に設定','ダンベルを膝で蹴り上げてスタートポジションへ','手のひら正面、肩の真上にセット','肘を約75°に開き胸上部へ下ろす','ストレッチを感じたら弧を描いて押し上げ','トップで軽く近づけて絞る'],
  tips:['45°以上だと肩の種目になる。30°がベスト','常に肩甲骨を寄せたまま','終了時はダンベルを太ももに戻してから座る']},
-'ショルダープレス':{t:'三角筋前・中部・三頭筋',sr:'3セット×10-12回',
+'ショルダープレス':{t:'三角筋前・中部・三頭筋',sr:'3セット×10-12回',db:1,
  steps:['背もたれ80-85°で座る','ダンベルを耳の横、肘90°に構える','手のひら正面のまま真上に押し上げ','トップで両手を近づける（ハの字→真上）','肘が肩より下がりすぎない位置まで戻す'],
  tips:['腰を反らない（腹筋で体幹固定）','肘の下限は耳の高さ','首をすくめない（僧帽筋に逃げる）']},
-'サイドレイズ':{t:'三角筋中部',sr:'3セット×12-15回',
+'サイドレイズ':{t:'三角筋中部',sr:'3セット×12-15回',db:1,
  steps:['軽めのダンベルで肩幅に立つ','体を5-10°前傾、ダンベルは体の横','肘を軽く曲げたまま、水を注ぐように小指側を上に','肩の高さで1秒キープ','重力に任せず、ゆっくり下ろす'],
  tips:['反動を使わない。5kgでも効く','肩をすくめない','肩より上は僧帽筋になる。上げすぎ注意','「肘を上げる」イメージで安定']},
 'トライセプスプッシュダウン':{t:'上腕三頭筋',sr:'3セット×12-15回',
@@ -304,7 +305,7 @@ const EXDB={
 '懸垂':{t:'広背筋・二頭筋・僧帽筋下部',sr:'4セット×限界まで',
  steps:['順手で肩幅より広く握る','肩甲骨を下げてデッドハングから','胸をバーに近づけるイメージで引き上げ','顎がバーを超えたら1秒キープ','腕が伸び切るまでゆっくり下ろす'],
  tips:['できなければラットプルダウンで代替','バンド補助も有効','反動禁止','上げで肩甲骨を寄せ、下ろしで広げる']},
-'ダンベルロウ':{t:'広背筋・僧帽筋・菱形筋',sr:'3セット×10-12回(各腕)',
+'ダンベルロウ':{t:'広背筋・僧帽筋・菱形筋',sr:'3セット×10-12回(各腕)',db:1,
  steps:['ベンチに片手片膝、背中は床と平行','反対の手でダンベル','腰の横へ引き上げ（肘を天井へ）','トップで肩甲骨を寄せ1秒','腕が伸び切るまで下ろす'],
  tips:['体を回転させない','腕でなく肘を引き上げる意識','腰のポケットに向かって引く軌道']},
 'シーテッドケーブルロウ':{t:'広背筋・僧帽筋中部',sr:'3セット×10-12回',
@@ -322,7 +323,7 @@ const EXDB={
 'ルーマニアンデッドリフト':{t:'ハムストリング・大臀筋',sr:'4セット×8-10回',
  steps:['肩幅で握り立つ','膝角度を固定したままお尻を後ろへ','バーは常に脚に沿わせて下ろす','ハムのストレッチ限界（膝下あたり）で止める','臀筋を絞って立ち上がる'],
  tips:['背中を絶対に丸めない','膝固定の股関節ヒンジ動作','バーが体から離れると腰に負担','お尻で後ろの壁にタッチするイメージ']},
-'ブルガリアンスクワット':{t:'大臀筋・四頭筋',sr:'3セット×10回×各脚',
+'ブルガリアンスクワット':{t:'大臀筋・四頭筋',sr:'3セット×10回×各脚',db:1,
  steps:['ベンチの前に立ち片足の甲を乗せる','前脚は大きく前へ','前膝を曲げ、後ろ膝が床に触れる直前まで','前脚かかとで押して立つ'],
  tips:['バランスが取りにくいのが正常','前脚に体重の8割','上体まっすぐ（前傾すると四頭筋メイン）','最初は自重でフォーム習得']},
 'レッグカール':{t:'ハムストリング（単関節）',sr:'3セット×12-15回',
@@ -684,13 +685,13 @@ function trainTab(){
   (vol>0?'<span class="num" style="font-size:20px;color:var(--accent)">'+Math.round(vol).toLocaleString()+'<span class="xs muted">kg 総ボリューム</span></span>':'')+'</div>'+
   '<div style="height:8px"></div>'+
   '<div class="chips">'+Object.keys(MENUS).map(k=>'<button class="chip '+(menuKey===k?'on':'')+'" onclick="setMenu(\''+k+'\')">'+MENUS[k].name+'</button>').join('')+'</div>'+
-  (!menuKey?'<div class="muted small" style="margin-top:8px">今日は休養日です。やる場合はメニューを選んでください。</div>':'')+
-  '<details><summary>ウォームアップの基本</summary><div class="small muted" style="line-height:1.6;margin-top:6px">1) 軽い有酸素5分 → 2) 動的ストレッチ（腕回し・股関節回し・ランジウォーク） → 3) 最初のコンパウンド種目でWUセット2回（40%×10回、60%×5回）</div></details>'+
+  (menuKey==='rest'?'<div class="muted small" style="margin-top:8px">🛌 今日はレスト日。回復も計画のうち。睡眠・タンパク質・水分を整えよう。</div>':'')+
+  (menuKey!=='rest'?'<details><summary>ウォームアップの基本</summary><div class="small muted" style="line-height:1.6;margin-top:6px">1) 軽い有酸素5分 → 2) 動的ストレッチ（腕回し・股関節回し・ランジウォーク） → 3) 最初のコンパウンド種目でWUセット2回（40%×10回、60%×5回）</div></details>':'')+
  '</div>'+
- (menuKey?exList.map(ex=>{
+ (menuKey&&menuKey!=='rest'?exList.map(ex=>{
    const g=EXDB[ex];const sets=logs[ex]||[];const prev=prevLog(ex);
    return '<div class="excard">'+
-    '<div class="row between"><span class="exname" onclick="openGuide(\''+ex+'\')">'+ex+' ⓘ</span>'+
+    '<div class="row between"><span class="exname" onclick="openGuide(\''+ex+'\')">'+ex+(exIsDb(ex)?' <span class="xs" style="color:var(--muted);font-weight:600">片手</span>':'')+' ⓘ</span>'+
     '<span class="xs muted">'+(g?g.sr:'')+'</span></div>'+
     (g?'<div class="xs muted">'+g.t+'</div>':'')+
     (prev?'<div class="xs" style="color:var(--f);margin-top:4px">前回('+fmtShort(prev.d)+')：'+prev.txt+'</div>':'<div class="xs muted" style="margin-top:4px">前回記録なし — 今日が基準になります</div>')+
@@ -701,11 +702,11 @@ function trainTab(){
       '<span class="row" style="gap:3px"><button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'sp\',-0.5)">−</button><span class="sv" style="width:60px">'+(s.sp!=null?s.sp:0)+'<i>km/h</i></span><button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'sp\',0.5)">＋</button></span>'+
       '<button class="donebtn'+(s.d?' on':'')+'" onclick="toggleSet(\''+ex+'\','+i+')">✓</button>'+
       '<button class="delx" onclick="delSet(\''+ex+'\','+i+')">✕</button></div>';
-     const unit=exUnit(ex);const rStep=unit==='秒'?5:1;
+     const unit=exUnit(ex);const rStep=unit==='秒'?5:1;const ws=wStep(ex);
      return '<div class="setrow"><span class="setn">SET '+(i+1)+'</span>'+
-      (md==='bw'?'':'<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'w\',-2.5)">−</button>'+
+      (md==='bw'?'':'<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'w\','+(-ws)+')">−</button>'+
        '<span class="sv">'+(s.w!==''&&s.w!=null?s.w:0)+'<i>kg</i></span>'+
-       '<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'w\',2.5)">＋</button>')+
+       '<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'w\','+ws+')">＋</button>')+
       '<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'r\',-'+rStep+')">−</button>'+
       '<span class="sv">'+(s.r!==''&&s.r!=null?s.r:0)+'<i>'+unit+'</i></span>'+
       '<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'r\','+rStep+')">＋</button>'+
@@ -744,10 +745,12 @@ window.addCustomEx=function(){const n=prompt('種目名を入力');if(!n)return;
  if(!wk.logs[n])wk.logs[n]=[{w:'',r:''}];saveR();};
 function exMode(ex){const g=EXDB[ex];return g&&g.mode?g.mode:'wt';}
 function exUnit(ex){const g=EXDB[ex];return g&&g.unit?g.unit:'回';}
+function exIsDb(ex){const g=EXDB[ex];return !!(g&&g.db);}
+function wStep(ex){return exIsDb(ex)?1:2.5;}
 function fmtSet(s,ex){
  if(s.min!=null)return s.min+'分・勾配'+(s.gr!=null?s.gr:0)+'%・'+(s.sp!=null?s.sp:0)+'km/h';
  if(exMode(ex)==='bw')return (s.r!==''&&s.r!=null?s.r:0)+exUnit(ex);
- return (s.w!==''&&s.w!=null&&s.w>0?s.w+'kg':'自重')+'×'+(s.r!==''&&s.r!=null?s.r:0);}
+ return (s.w!==''&&s.w!=null&&s.w>0?s.w+'kg'+(exIsDb(ex)?'(片手)':''):'自重')+'×'+(s.r!==''&&s.r!=null?s.r:0);}
 function prevLog(ex){const ds=Object.keys(S.days).filter(d=>d<curDate&&S.days[d].wk&&S.days[d].wk.logs&&(S.days[d].wk.logs[ex]||[]).some(s=>s.r||s.w||s.min)).sort();
  if(!ds.length)return null;const d=ds[ds.length-1];const sets=S.days[d].wk.logs[ex].filter(s=>s.r||s.w||s.min);
  const txt=sets.map(s=>fmtSet(s,ex)).join(', ');
