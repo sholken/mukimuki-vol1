@@ -794,8 +794,8 @@ function exMode(ex){const g=EXDB[ex];return g&&g.mode?g.mode:'wt';}
 function exUnit(ex){const g=EXDB[ex];return g&&g.unit?g.unit:'回';}
 function exIsDb(ex){const g=EXDB[ex];return !!(g&&g.db);}
 function wStep(ex){return exIsDb(ex)?1:2.5;}
-const BIGLIFT=['ベンチプレス','バーベルスクワット','ルーマニアンデッドリフト'];
-const COMPOUND=['インクラインダンベルプレス','ショルダープレス','レッグプレス','懸垂','ダンベルロウ','シーテッドケーブルロウ','ブルガリアンスクワット','ヒップスラスト','ウォーキングランジ'];
+const BIGLIFT=['ベンチプレス','バーベルスクワット','ルーマニアンデッドリフト','懸垂'];
+const COMPOUND=['インクラインダンベルプレス','ショルダープレス','レッグプレス','ダンベルロウ','シーテッドケーブルロウ','ブルガリアンスクワット','ヒップスラスト','ウォーキングランジ'];
 function exRest(ex){if(S.rest&&S.rest[ex]!=null)return S.rest[ex];
  if(exMode(ex)==='cardio')return 0;
  if(exMode(ex)==='bw')return 45;
