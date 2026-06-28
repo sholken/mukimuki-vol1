@@ -506,6 +506,8 @@ function ma7(pts){return pts.map(function(p){const t=p[0];
  const win=pts.filter(function(q){return q[0]<=t&&q[0]>=t-6*86400000;});
  return [t,win.reduce(function(a,b){return a+b[1];},0)/win.length];});}
 function weightAt(ds){const lw=latestWeight(ds);return lw?lw.w:null;}
+function firstVal(key){const ds=Object.keys(S.days).filter(function(d){return S.days[d][key]!=null;}).sort();
+ return ds.length?S.days[ds[0]][key]:null;}
 
 /* ================= チャート ================= */
 function lineChart(series,h){h=h||150;const w=340,pl=36,pr=10,pt=10,pb=20;
@@ -590,6 +592,8 @@ function homeTab(){
  '<div class="grid2" style="margin-top:10px;margin-bottom:12px">'+
    '<div class="tile"><div class="tl">体脂肪率</div><div class="row" style="justify-content:center"><input class="tin" type="number" step="0.1" inputmode="decimal" placeholder="--.-" value="'+(o.bf!=null?o.bf:'')+'" onchange="setVal(\'bf\',this.value)"><span class="tu">%</span></div>'+
      '<div class="ts" style="text-align:center">開始から '+(o.bf!=null?((o.bf-P.startBF<=0?'':'+')+(o.bf-P.startBF).toFixed(1)+'pt'):'未計測')+'</div></div>'+
+   (function(){const fw=firstVal('waist');return '<div class="tile"><div class="tl">ウエスト</div><div class="row" style="justify-content:center"><input class="tin" type="number" step="0.1" inputmode="decimal" placeholder="--.-" value="'+(o.waist!=null?o.waist:'')+'" onchange="setVal(\'waist\',this.value)"><span class="tu">cm</span></div>'+
+     '<div class="ts" style="text-align:center">'+(o.waist!=null&&fw!=null?(o.waist-fw<=0?'開始から':'開始から+')+(o.waist-fw).toFixed(1)+'cm':'週1回おへそ周り')+'</div></div>';})()+
    '<div class="tile"><div class="tl">睡眠</div><div class="row" style="justify-content:center"><input class="tin" type="number" step="0.1" inputmode="decimal" placeholder="-.-" value="'+(o.sleep!=null?o.sleep:'')+'" onchange="setVal(\'sleep\',this.value)"><span class="tu">h</span></div>'+
      '<div class="ts" style="text-align:center">目標 '+P.sleep+'h以上（Watchの値）</div></div>'+
    '<div class="tile"><div class="tl">水分</div><div class="row between"><span class="tv">'+((o.water||0)/1000).toFixed(2)+'<span class="tu">/'+(P.water/1000)+'L</span></span>'+
@@ -925,6 +929,7 @@ function graphTab(){
  const P=S.profile;
  const wPts=Object.keys(S.days).filter(d=>S.days[d].weight!=null).sort().map(d=>[+new Date(d),S.days[d].weight]);
  const bPts=Object.keys(S.days).filter(d=>S.days[d].bf!=null).sort().map(d=>[+new Date(d),S.days[d].bf]);
+ const wsPts=Object.keys(S.days).filter(d=>S.days[d].waist!=null).sort().map(d=>[+new Date(d),S.days[d].waist]);
  const gl=[[+new Date(P.startDate),P.startWeight],[+new Date(P.goalDate),P.goalWeight]];
  const gb=[[+new Date(P.startDate),P.startBF],[+new Date(P.goalDate),P.goalBF]];
  const exNames=[];Object.keys(S.days).forEach(d=>{const wk=S.days[d].wk;if(wk&&wk.logs)Object.keys(wk.logs).forEach(e=>{if(exNames.indexOf(e)<0)exNames.push(e);});});
@@ -935,7 +940,9 @@ function graphTab(){
  return ''+
  '<div class="card"><h3>体重　<span class="xs muted">点線=目標 / 細線=7日平均</span></h3>'+
   lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:ma7(wPts),color:'#8A7B4D'},{pts:wPts,color:'#EFCF7F',dots:1}],170)+'</div>'+
- '<div class="card"><h3>体脂肪率</h3>'+
+ '<div class="card"><h3>ウエスト　<span class="xs muted">脂肪の最も正確な指標</span></h3>'+
+  (wsPts.length?lineChart([{pts:wsPts,color:'#EFCF7F',dots:1}],150):'<div class="muted small">週1回おへそ周りを測ると、ここに脂肪の推移が出ます</div>')+'</div>'+
+ '<div class="card"><h3>体脂肪率　<span class="xs muted">家庭用は誤差大・月1で参考程度に</span></h3>'+
   lineChart([{pts:gb,color:'#5C564A',dash:1},{pts:bPts,color:'#6B97C2',dots:1}],150)+'</div>'+
  '<div class="card"><h3>種目の重量推移</h3>'+
   (exNames.length?'<select onchange="exSel=this.value;render()" style="width:100%;margin-bottom:8px">'+
@@ -1028,7 +1035,7 @@ window.weeklyReview=function(){
     return mn+'['+its.map(function(m){return m.n+(m.q&&m.q!==1?'×'+m.q:'');}).join('・')+']';
    }).filter(Boolean).join(' ');
   }
-  lines.push(fmtShort(ds)+'｜体重'+(o.weight!=null?o.weight+'kg':'未計測')+(o.bf!=null?'/'+o.bf+'%':'')+
+  lines.push(fmtShort(ds)+'｜体重'+(o.weight!=null?o.weight+'kg':'未計測')+(o.bf!=null?'/'+o.bf+'%':'')+(o.waist!=null?'/ウエスト'+o.waist+'cm':'')+
    '｜摂取'+t.k+'kcal P'+t.p+' F'+t.f+' C'+t.c+'（スイーツ'+t.sw+'kcal）'+
    '｜食事内容：'+meals+
    '｜水分'+((o.water||0)/1000).toFixed(1)+'L｜睡眠'+(o.sleep!=null?o.sleep+'h':'未記録')+
