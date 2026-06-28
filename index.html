@@ -117,6 +117,8 @@ nav button.on{color:var(--accent);}
 .sheet{background:#141317;border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:86vh;
   overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;}
 .sheet h3{margin:2px 0 12px;font-size:16px;font-weight:700;}
+.sheetclose{position:sticky;top:-16px;float:right;margin:-4px -4px 0 0;background:var(--card2);border:1px solid var(--line);
+  color:var(--txt);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:800;z-index:5;}
 .foodrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line);}
 .foodrow .nm{font-size:14px;font-weight:600;}
 .foodrow .meta{font-size:11px;color:var(--muted);font-family:var(--num);}
@@ -859,27 +861,33 @@ function beep(){try{if(!restAudio)restAudio=new (window.AudioContext||window.web
   g.gain.exponentialRampToValueAtTime(0.0001,t0+0.13);o.start(t0);o.stop(t0+0.14);});
  }catch(e){}}
 function fmtClock(s){const m=Math.floor(s/60),ss=('0'+(s%60)).slice(-2);return m+':'+ss;}
+function restRemaining(){if(!restState)return 0;return Math.max(0,Math.round((restState.endAt-Date.now())/1000));}
 function renderRestBar(){const b=document.getElementById('restbar');if(!restState)return;
- const done=restState.remaining<=0;
+ const rem=restRemaining();const done=rem<=0;
  b.className='restbar'+(done?' done':'');
- b.innerHTML='<span class="rt">'+(done?'0:00':fmtClock(restState.remaining))+'</span>'+
+ b.innerHTML='<span class="rt">'+(done?'0:00':fmtClock(rem))+'</span>'+
   '<span class="rex">'+(done?'✓ レスト終了 — 次のセットへ':restState.ex+'　レスト')+'</span>'+
   (done?'':'<button onclick="adjRest(-15)">−15</button><button onclick="adjRest(15)">+15</button>')+
   '<button class="skip" onclick="stopRest()">'+(done?'閉じる':'スキップ')+'</button>';}
+function restFire(){if(!restState||restState.fired)return;restState.fired=true;
+ if(restState.id){clearInterval(restState.id);restState.id=null;}
+ renderRestBar();beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);
+ restState.hide=setTimeout(stopRest,8000);}
+function restTick(){if(!restState)return;
+ if(restRemaining()<=0)restFire();else renderRestBar();}
 function startRest(ex,sec){stopRestTimer();
- restState={ex:ex,remaining:sec};
+ restState={ex:ex,endAt:Date.now()+sec*1000,fired:false};
  document.getElementById('rest').classList.add('show');renderRestBar();
- restState.id=setInterval(function(){restState.remaining--;
-  if(restState.remaining<=0){restState.remaining=0;renderRestBar();clearInterval(restState.id);restState.id=null;
-   beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);
-   restState.hide=setTimeout(stopRest,5000);}
-  else renderRestBar();},1000);}
+ restState.id=setInterval(restTick,1000);}
 function stopRestTimer(){if(restState){if(restState.id)clearInterval(restState.id);if(restState.hide)clearTimeout(restState.hide);}}
-window.adjRest=function(d){if(!restState)return;restState.remaining=Math.max(1,restState.remaining+d);renderRestBar();};
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&restState)restTick();});
+window.addEventListener('focus',function(){if(restState)restTick();});
+window.adjRest=function(d){if(!restState||restState.fired)return;restState.endAt+=d*1000;
+ if(restState.endAt<Date.now()+1000)restState.endAt=Date.now()+1000;renderRestBar();};
 window.editRest=function(ex){const cur=exRest(ex);const v=prompt(ex+' のレスト秒数',cur);
  if(v===null)return;const n=parseInt(v);if(isNaN(n)||n<0){toast('数字を入力してください');return;}
  S.rest[ex]=n;save();render();toast('✓ '+ex+' のレストを'+fmtClock(n)+'に設定');};
-window.stopRest=function(){stopRestTimer();restState=null;document.getElementById('rest').classList.remove('show');};
+window.stopRest=function(){stopRestTimer();restState=null;const r=document.getElementById('rest');if(r)r.classList.remove('show');};
 window.delSet=function(ex,i){const wk=ensureWk();wk.logs[ex].splice(i,1);if(!wk.logs[ex].length)delete wk.logs[ex];saveR();};
 window.addCustomEx=function(){const n=prompt('種目名を入力');if(!n)return;const wk=ensureWk();
  if(!wk.logs[n])wk.logs[n]=[{w:'',r:''}];saveR();};
@@ -1057,7 +1065,8 @@ function fallbackCopy(t){openModal('<h3>レポートを全選択してコピー<
  t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</textarea>');}
 
 /* ================= 共通UI ================= */
-function openModal(html){document.getElementById('sheet').innerHTML=html;document.getElementById('modal').classList.add('show');}
+function openModal(html){document.getElementById('sheet').innerHTML='<button class="sheetclose" onclick="closeModal()">✕ 閉じる</button>'+html;
+ document.getElementById('modal').classList.add('show');document.getElementById('sheet').scrollTop=0;}
 window.closeModal=function(){document.getElementById('modal').classList.remove('show');if(tab==='food')render();};
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
  clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove('show');},2200);}
