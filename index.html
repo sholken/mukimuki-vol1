@@ -391,10 +391,10 @@ const EXDB={
 'トライセプスプッシュダウン':{t:'上腕三頭筋',sr:'3セット×12-15回',
  steps:['プーリー最上段、バーorロープ装着','肘を体の横に固定し前腕だけで押し下げ','完全に伸ばし切る（ロープは左右に開く）','肘の位置を動かさずゆっくり戻す'],
  tips:['肘が前後に動いたらフォーム崩壊','体を前に倒しすぎない','伸ばし切ると収縮が最大']},
-'アブローラー':{t:'腹直筋・体幹',sr:'3セット×8-12回',mode:'bw',unit:'回',
+'アブローラー':{t:'腹直筋・体幹',sr:'3セット×8-12回',spine:1,mode:'bw',unit:'回',
  steps:['膝コロでスタート','腹筋に力、背中を軽く丸める','体が一直線になるあたりまで転がす','腹筋の力で引き戻す（腕で引かない）'],
  tips:['腰を反らすと腰痛の原因。骨盤後傾気味に','最初は浅く、徐々に伸ばす','立ちコロは上級者向け。膝コロで十分']},
-'バーベルスクワット':{t:'大腿四頭筋・大臀筋・ハム',sr:'4セット×6-8回',
+'バーベルスクワット':{t:'大腿四頭筋・大臀筋・ハム',sr:'4セット×6-8回',spine:1,
  steps:['ハイバーで担ぐ（僧帽筋の上）','足幅肩幅〜やや広め、つま先30°外','胸を張り腹圧をかけて開始','お尻を引きながら膝を曲げ、膝はつま先方向へ','パラレルまで下ろす','かかとで地面を押して立つ'],
  tips:['かかと浮き→プレートを敷くかリフティングシューズ','ニーイン厳禁','腹圧：大きく吸って360°膨らませ止める','WU：自重×10→バー×10→50%×5→70%×3','セーフティバー必須']},
 'レッグプレス':{t:'大腿四頭筋・大臀筋',sr:'3セット×10-12回',
@@ -427,7 +427,7 @@ const EXDB={
 'ハンギングレッグレイズ':{t:'腹直筋下部・腸腰筋',sr:'3セット×10-15回',mode:'bw',unit:'回',
  steps:['バーにぶら下がる（肩幅）','揺れを止めてから膝を胸へ引き上げ','余裕があれば脚を伸ばして','骨盤が後傾するまで上げる','脚を振らずゆっくり下ろす'],
  tips:['骨盤の後傾が重要','振れるなら膝曲げバージョン','握力が限界ならストラップ使用']},
-'ルーマニアンデッドリフト':{t:'ハムストリング・大臀筋',sr:'4セット×8-10回',
+'ルーマニアンデッドリフト':{t:'ハムストリング・大臀筋',sr:'4セット×8-10回',spine:1,
  steps:['肩幅で握り立つ','膝角度を固定したままお尻を後ろへ','バーは常に脚に沿わせて下ろす','ハムのストレッチ限界（膝下あたり）で止める','臀筋を絞って立ち上がる'],
  tips:['背中を絶対に丸めない','膝固定の股関節ヒンジ動作','バーが体から離れると腰に負担','お尻で後ろの壁にタッチするイメージ']},
 'ブルガリアンスクワット':{t:'大臀筋・四頭筋',sr:'3セット×10回×各脚',db:1,
@@ -436,7 +436,7 @@ const EXDB={
 'レッグカール':{t:'ハムストリング（単関節）',sr:'3セット×12-15回',
  steps:['マシンにセット、パッドはアキレス腱の少し上','膝を曲げお尻の方へ引き寄せ','最大収縮で1秒キープ','伸び切る手前までゆっくり戻す'],
  tips:['ライイングはお尻を浮かさない','つま先を背屈するとハムに効く','下ろし3秒でさらに効果的']},
-'ヒップスラスト':{t:'大臀筋・ハムストリング',sr:'3セット×10-12回',
+'ヒップスラスト':{t:'大臀筋・ハムストリング',sr:'3セット×10-12回',spine:1,
  steps:['ベンチに肩甲骨を乗せバーを骨盤に（パッド必須）','膝90°、足は肩幅','かかとで押し骨盤を天井へ突き上げ','体一直線で臀筋を2秒強く絞る','床に着く前に次のレップ'],
  tips:['腰を反らせすぎない。骨盤後傾で臀筋','顎を引きおへそを見る','トップで尻がカチカチなら正解']},
 'カーフレイズ(座位)':{t:'ヒラメ筋',sr:'4セット×15-20回',
@@ -574,7 +574,22 @@ function homeTab(){
  const d7=new Date(curDate+'T00:00:00');d7.setDate(d7.getDate()-7);
  const lw7=latestWeight(fmt(d7));const wk7=lw7?w-lw7.w:0;
  const kcalLeft=Math.max(0,P.kcal-t.k);
+ const needBk=!S.lastExport||(Date.now()-S.lastExport)>7*86400000;
+ let ydRow='';
+ (function(){const todayStr=fmt(new Date());if(curDate!==todayStr)return;
+  const yd=new Date();yd.setDate(yd.getDate()-1);const yds=fmt(yd);
+  if(yds<P.startDate)return;const yo=S.days[yds];
+  if(yo&&(yo.weight!=null||yo.wSkip))return;
+  ydRow='<div class="card" style="padding:10px 14px;margin-bottom:10px"><div class="row between">'+
+   '<span class="small">昨日('+fmtShort(yds)+')の体重が未入力</span>'+
+   '<span class="row" style="gap:5px"><input type="number" step="0.1" inputmode="decimal" id="ydw" placeholder="--.-" style="width:66px;padding:6px">'+
+   '<button class="mini" onclick="fillYesterday(\''+yds+'\')">保存</button>'+
+   '<button class="delx" onclick="skipYesterday(\''+yds+'\')">✕</button></span></div></div>';})();
  return ''+
+ (needBk?'<div class="card" style="padding:10px 14px;margin-bottom:10px;border-color:var(--accent2)"><div class="row between">'+
+  '<span class="small">☁ '+(S.lastExport?'最終バックアップから'+Math.floor((Date.now()-S.lastExport)/86400000)+'日':'バックアップがまだ一度もありません')+'</span>'+
+  '<button class="mini" onclick="shareJson()">1タップ保存</button></div></div>':'')+
+ ydRow+
  '<div style="text-align:center;padding:4px 0 0">'+
    '<div class="row" style="justify-content:center;gap:8px">'+
      '<span class="pill gold">DAY '+dayN+'</span>'+
@@ -629,6 +644,10 @@ function homeTab(){
 
 window.setVal=function(k,v){const o=D(curDate);const n=parseFloat(v);o[k]=isNaN(n)?null:n;saveR();};
 window.addWater=function(ml){const o=D(curDate);o.water=Math.max(0,(o.water||0)+ml);saveR();};
+window.fillYesterday=function(ds){const v=parseFloat(document.getElementById('ydw').value);
+ if(isNaN(v)){toast('数値を入力してください');return;}
+ D(ds).weight=v;saveR();toast('✓ 昨日の体重を記録しました');};
+window.skipYesterday=function(ds){D(ds).wSkip=1;saveR();};
 window.addCardio=function(){const t=document.getElementById('cdtype').value,m=parseInt(document.getElementById('cdmin').value);
  if(!m){toast('分数を入力してください');return;}D(curDate).cardio.push({type:t,min:m});saveR();};
 const METS={'インクラインウォーク':6,'ランニング':9.8,'バイク':7,'ウォーキング':3.5,'水泳':8,'その他':5};
@@ -798,6 +817,7 @@ function trainTab(){
   '<div class="chips">'+Object.keys(MENUS).map(k=>'<button class="chip '+(menuKey===k?'on':'')+'" onclick="setMenu(\''+k+'\')">'+MENUS[k].name+'</button>').join('')+'</div>'+
   (menuKey==='rest'?'<div class="muted small" style="margin-top:8px">🛌 今日はレスト日。回復も計画のうち。睡眠・タンパク質・水分を整えよう。</div>':'')+
   (menuKey!=='rest'?'<details><summary>ウォームアップの基本</summary><div class="small muted" style="line-height:1.6;margin-top:6px">1) 軽い有酸素5分 → 2) 動的ストレッチ（腕回し・股関節回し・ランジウォーク） → 3) 最初のコンパウンド種目でWUセット2回（40%×10回、60%×5回）</div></details>':'')+
+  '<button class="ghost" style="width:100%;margin-top:8px'+(S.injury?';border-color:var(--bad);color:var(--bad)':'')+'" onclick="toggleInjury()">🦴 腰痛モード'+(S.injury?'ON（'+fmtShort(S.injury.since)+'〜・タップで終了）':'（腰を痛めたらON）')+'</button>'+
  '</div>'+
  (menuKey&&menuKey!=='rest'?exList.map(ex=>{
    const g=EXDB[ex];const sets=logs[ex]||[];const prev=prevLog(ex);
@@ -806,6 +826,12 @@ function trainTab(){
     '<span class="xs muted">'+(g?g.sr:'')+'</span></div>'+
     (g?'<div class="xs muted">'+g.t+'</div>':'')+
     (prev?'<div class="xs" style="color:var(--f);margin-top:4px">前回('+fmtShort(prev.d)+')：'+prev.txt+'</div>':'<div class="xs muted" style="margin-top:4px">前回記録なし — 今日が基準になります</div>')+
+    (function(){if(!(S.injury&&g&&g.spine))return '';
+      const wks=Math.max(0,Math.floor((+new Date(curDate)-+new Date(S.injury.since))/(7*86400000)));
+      const pct=Math.min(100,50+10*wks);
+      const tgt=(prev&&prev.top)?Math.round(prev.top*pct/100/2.5)*2.5:null;
+      return '<div class="xs" style="color:var(--bad);margin-top:4px">🦴 脊柱負荷種目 — 痛みが残るなら「'+(ALT_EX[ex]||'マシン系')+'」で代替を</div>'+
+       (tgt?'<div class="xs" style="color:var(--f)">復帰目安 '+tgt+'kg（直近'+prev.top+'kgの'+pct+'%・痛みゼロなら週+10%）</div>':'');})()+
     (exMode(ex)!=='cardio'?'<div class="xs muted" style="margin-top:4px">⏱ レスト '+fmtClock(exRest(ex))+' <span style="color:var(--accent)" onclick="editRest(\''+ex+'\')">変更</span> ・ ✓を押すと自動でタイマー開始</div>':'')+
     sets.map((s,i)=>{const md=exMode(ex);
      if(md==='cardio')return '<div class="setrow" style="flex-wrap:wrap">'+
@@ -824,6 +850,9 @@ function trainTab(){
       '<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'r\','+rStep+')">＋</button>'+
       '<button class="donebtn'+(s.d?' on':'')+'" onclick="toggleSet(\''+ex+'\','+i+')">✓</button>'+
       '<button class="delx" onclick="delSet(\''+ex+'\','+i+')">✕</button></div>';}).join('')+
+    (function(){if(exMode(ex)!=='wt'||!prev||prev.top==null||prev.top<=0)return '';
+      const jump=sets.some(function(s){return s.w!==''&&s.w!=null&&parseFloat(s.w)>prev.top*1.05+0.001;});
+      return jump?'<div class="xs" style="color:var(--bad);margin-top:6px">⚠️ 前回トップ'+prev.top+'kgから+5%超の重量です。ジャンプは1段階（'+wStep(ex)+'kg）ずつが安全（117.5kg事件を忘れるな）</div>':'';})()+
     '<button class="ghost" style="margin-top:8px;width:100%" onclick="addSet(\''+ex+'\')">＋ セット追加</button>'+
    '</div>';
   }).join('')+
@@ -901,6 +930,12 @@ function exIsDb(ex){const g=EXDB[ex];return !!(g&&g.db);}
 function wStep(ex){return exIsDb(ex)?1:2.5;}
 const BIGLIFT=['ベンチプレス','バーベルスクワット','ルーマニアンデッドリフト','懸垂'];
 const COMPOUND=['インクラインダンベルプレス','ショルダープレス','レッグプレス','ダンベルロウ','シーテッドケーブルロウ','ブルガリアンスクワット','ヒップスラスト','ウォーキングランジ'];
+const ALT_EX={'バーベルスクワット':'レッグプレス','ルーマニアンデッドリフト':'レッグカール','ヒップスラスト':'レッグカール','アブローラー':'デッドバグ'};
+window.toggleInjury=function(){
+ if(S.injury){if(!confirm('腰痛モードを終了しますか？（痛みが完全に消えてから）'))return;
+  S.injury=null;toast('腰痛モード終了。復帰はゆっくりと💪');}
+ else{S.injury={since:curDate};toast('🦴 腰痛モードON — 脊柱負荷種目に警告と代替案を表示します');}
+ saveR();};
 function exRest(ex){if(S.rest&&S.rest[ex]!=null)return S.rest[ex];
  if(exMode(ex)==='cardio')return 0;
  if(exMode(ex)==='bw')return 45;
@@ -988,9 +1023,11 @@ function setTab(){
   '<button class="btn" onclick="weeklyReview()">直近7日のレポートをコピー</button>'+
   '<div class="xs muted" style="margin-top:8px">コピーしたらClaudeに貼り付けてください。評価・問題点・来週の指示が返ってきます。</div></div>'+
  '<div class="card"><h3>データ</h3>'+
+  '<button class="btn" style="margin-bottom:8px" onclick="shareJson()">☁ バックアップを保存（iCloud/ファイルへ）</button>'+
   '<div class="row" style="gap:8px"><button class="ghost" style="flex:1" onclick="exportJson()">エクスポート</button>'+
-  '<label class="ghost" style="flex:1;text-align:center">インポート<input type="file" accept=".json" style="display:none" onchange="importJson(event)"></label></div>'+
-  '<div class="xs muted" style="margin-top:8px">データはこの端末（ブラウザ）の中だけに保存されます。週1回エクスポートしてバックアップを推奨。機種変更時はインポートで復元。</div>'+
+  '<label class="ghost" style="flex:1;text-align:center">インポート<input type="file" accept=".json" style="display:none" onchange="importJson(event)"></label>'+
+  '<button class="ghost" style="flex:1" onclick="openBackups()">自動保存から復元</button></div>'+
+  '<div class="xs muted" style="margin-top:8px">起動のたびに端末内へ自動スナップショット（14日分）。それとは別に、週1回「バックアップを保存」でiCloudにも逃がすのが最強です。最終バックアップ: '+(S.lastExport?fmtShort(fmt(new Date(S.lastExport))):'未実施')+'</div>'+
   '<button class="ghost" style="width:100%;margin-top:10px;color:var(--bad)" onclick="resetAll()">全データを初期化</button></div>'+
  '<div class="card"><h3>iPhoneに入れる方法</h3><div class="small muted" style="line-height:1.7">'+
   '① このファイルをWeb上にホスティング（GitHub Pages / Netlify等・無料）<br>'+
@@ -1008,7 +1045,36 @@ window.editMission=function(){const cur=S.mission?S.mission.text:'';
 window.setProfStr=function(k,v){if(v)S.profile[k]=v;saveR();};
 window.exportJson=function(){const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
- a.download='mukimuki_backup_'+curDate.replace(/-/g,'')+'.json';a.click();toast('エクスポートしました');};
+ a.download='mukimuki_backup_'+curDate.replace(/-/g,'')+'.json';a.click();
+ S.lastExport=Date.now();save();toast('エクスポートしました');};
+window.shareJson=function(){
+ const json=JSON.stringify(S,null,1);
+ const file=new File([json],'mukimuki_backup_'+fmt(new Date()).replace(/-/g,'')+'.json',{type:'application/json'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+  navigator.share({files:[file],title:'ムキムキ計画バックアップ'}).then(function(){
+   S.lastExport=Date.now();save();render();toast('✓ バックアップを保存しました');
+  }).catch(function(){});
+ }else{exportJson();render();}};
+/* 自動スナップショット（IndexedDBに日次・14世代） */
+function autoSnapshot(){if(!db||!db.objectStoreNames.contains('backups'))return;
+ try{const st=db.transaction('backups','readwrite').objectStore('backups');
+  st.put({d:fmt(new Date()),ts:Date.now(),data:localStorage.getItem(LS)});
+  const kq=st.getAllKeys();
+  kq.onsuccess=function(){const ks=kq.result.sort();while(ks.length>14){st.delete(ks.shift());}};
+ }catch(e){}}
+window.openBackups=function(){if(!db||!db.objectStoreNames.contains('backups')){toast('スナップショットがまだありません');return;}
+ const q=db.transaction('backups','readonly').objectStore('backups').getAll();
+ q.onsuccess=function(){const bs=q.result.sort(function(a,b){return a.d<b.d?1:-1;});
+  if(!bs.length){toast('スナップショットがまだありません');return;}
+  openModal('<h3>自動スナップショットから復元</h3>'+
+   '<div class="xs muted" style="margin-bottom:8px">毎日の起動時に自動保存された14日分。復元すると現在のデータは上書きされます。</div>'+
+   bs.map(function(b){const d=JSON.parse(b.data||'{}');const days=d.days?Object.keys(d.days).length:0;
+    return '<div class="foodrow"><div><div class="nm">'+b.d+'</div><div class="meta">記録'+days+'日分</div></div>'+
+     '<button class="mini" onclick="restoreBackup(\''+b.d+'\')">復元</button></div>';}).join(''));};};
+window.restoreBackup=function(d){if(!confirm(d+' 時点のデータに戻します。現在のデータは上書きされます。よろしいですか？'))return;
+ const q=db.transaction('backups','readonly').objectStore('backups').get(d);
+ q.onsuccess=function(){if(q.result&&q.result.data){localStorage.setItem(LS,q.result.data);location.reload();}
+  else toast('復元データが見つかりませんでした');};};
 window.importJson=function(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();
  r.onload=function(){try{const d=JSON.parse(r.result);if(!d.profile||!d.days)throw 0;S=d;save();render();toast('インポートしました ✓');}
  catch(e){toast('ファイルが読めませんでした');}};r.readAsText(f);};
@@ -1092,9 +1158,11 @@ function render(){
  document.getElementById('nav').innerHTML=NAV.map(n=>'<button class="'+(tab===n[0]?'on':'')+'" onclick="go(\''+n[0]+'\')"><span class="ic">'+n[1]+'</span>'+n[2]+'</button>').join('');
 }
 /* IndexedDB 写真 */
-(function(){const req=indexedDB.open('mukimuki',1);
- req.onupgradeneeded=function(e){e.target.result.createObjectStore('photos',{keyPath:'id',autoIncrement:true});};
- req.onsuccess=function(e){db=e.target.result;};
+(function(){const req=indexedDB.open('mukimuki',2);
+ req.onupgradeneeded=function(e){const d=e.target.result;
+  if(!d.objectStoreNames.contains('photos'))d.createObjectStore('photos',{keyPath:'id',autoIncrement:true});
+  if(!d.objectStoreNames.contains('backups'))d.createObjectStore('backups',{keyPath:'d'});};
+ req.onsuccess=function(e){db=e.target.result;autoSnapshot();};
 })();
 render();
 </script>
