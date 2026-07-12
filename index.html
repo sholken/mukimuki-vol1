@@ -542,6 +542,10 @@ function coachMsg(o,t,P){
  const hr=new Date().getHours();const isToday=curDate===fmt(new Date());
  const pLeft=P.p-t.p;
  if(o.weight==null)return 'まずは今朝の体重を入力しよう！毎朝起きてすぐ・同じ条件で測るのがコツだ⚖️';
+ const ydds=(function(){const d=new Date(curDate+'T00:00:00');d.setDate(d.getDate()-1);return fmt(d);})();
+ const evT=o.event,evY=(S.days[ydds]&&S.days[ydds].event)||drankOn(ydds);
+ if(evY)return '昨日は'+((S.days[ydds]&&S.days[ydds].event)?'会食':'酒あり')+'。今朝の体重が+1kg前後でも、それはほぼ水分とグリコーゲンだ。脂肪じゃない。今日の任務：①水3L ②タンパク質優先で普通に食べる（絶食は逆効果）③できれば有酸素30分。2〜3日で数字は戻る🔥';
+ if(evT)return '今夜は会食だ（枠'+evT.kcal.toLocaleString()+'kcal確保済み）。昼までにタンパク質25g＋米を必ず入れて、飢えた状態で店に行くな。酒は3杯まで＋1杯ごとに炭酸水。締めは断って、堂々と楽しんでこい🍺';
  if(t.k>P.kcal)return 'カロリーが'+(t.k-P.kcal)+'kcalオーバー…！夜は軽めにして、明日インクラインウォーク30分でリカバリーしましょう🏃';
  if(t.sw>P.sweets)return 'スイーツ枠を'+(t.sw-P.sweets)+'kcal超えました🍰 今日はここでストップ！明日は枠内で楽しみましょう';
  const lwc=latestWeight(curDate);const wNow=lwc?lwc.w:P.startWeight;
@@ -627,7 +631,13 @@ function homeTab(){
    '<div class="bar sweet" style="margin-top:4px"><i style="width:'+Math.min(100,t.sw/P.sweets*100)+'%"></i></div>'+
  '</div>'+
  '<div class="card"><div class="coach"><div class="cavatar">✳&#xFE0E;</div><div class="cbubble">'+coachMsg(o,t,P)+
-   '<div style="margin-top:6px"><a class="glink" onclick="weeklyReview()">週次面談レポートをコピー →</a>　<a class="glink" onclick="editMission()">ミッション編集 →</a></div></div></div></div>'+
+   '<div style="margin-top:6px"><a class="glink" onclick="weeklyReview()">週次面談レポートをコピー →</a>　<a class="glink" onclick="editMission()">ミッション編集 →</a>　<a class="glink" onclick="openEventModal()">🍺会食予定 →</a></div></div></div></div>'+
+ (o.event?'<div class="card" style="border-color:var(--accent2)">'+
+   '<h3 style="color:var(--accent)">🍺 今夜は会食（枠'+o.event.kcal.toLocaleString()+'kcal確保済み）</h3>'+
+   '<div class="small" style="line-height:1.8">①昼までにタンパク質25g＋米（飢えて店に行かない）<br>②酒は3杯まで＋1杯ごとに炭酸水<br>③締めの麺・米だけ回避</div>'+
+   '<div class="xs muted" style="margin-top:6px">会食以外の食事の目安：'+Math.max(0,P.kcal-o.event.kcal).toLocaleString()+'kcal ・ <span class="glink" onclick="openEventModal()">変更/解除</span></div></div>':'')+
+ ((function(){const td=relDate(1);const tm=S.days[td]&&S.days[td].event;
+   return (tm&&curDate===fmt(new Date()))?'<div class="xs muted" style="text-align:center;margin-bottom:10px">📅 明日は会食予定（枠'+tm.kcal.toLocaleString()+'kcal）— 前日はいつも通りでOK</div>':'';})())+
  (S.mission&&S.mission.text?'<div class="card" style="border-color:var(--accent2)" onclick="editMission()">'+
    '<h3 style="color:var(--accent)">⚡ 今週のミッション</h3>'+
    '<div style="font-weight:700;line-height:1.7">'+esc(S.mission.text)+'</div>'+
@@ -648,6 +658,27 @@ window.fillYesterday=function(ds){const v=parseFloat(document.getElementById('yd
  if(isNaN(v)){toast('数値を入力してください');return;}
  D(ds).weight=v;saveR();toast('✓ 昨日の体重を記録しました');};
 window.skipYesterday=function(ds){D(ds).wSkip=1;saveR();};
+
+/* ===== 会食・飲酒モード ===== */
+function drankOn(ds){const o=S.days[ds];if(!o||!o.meals)return false;
+ return o.meals.some(function(m){return /ビール|ハイボール|日本酒|焼酎|ワイン|チューハイ|レモンサワー|梅酒|カクテル|酒/.test(m.n);});}
+function relDate(off){const d=new Date();d.setDate(d.getDate()+off);return fmt(d);}
+window.openEventModal=function(){
+ function row(off,label){const ds=relDate(off);const ev=S.days[ds]&&S.days[ds].event;
+  return '<div style="margin-bottom:14px"><div class="small" style="font-weight:800;margin-bottom:6px">'+label+'（'+fmtShort(ds)+'）</div>'+
+   (ev?'<div class="row between"><span class="pill gold">登録済み・枠'+ev.kcal.toLocaleString()+'kcal</span>'+
+    '<button class="mini" onclick="clearEvent(\''+ds+'\')">解除</button></div>'
+   :'<div class="row" style="gap:6px">'+
+    '<button class="ghost" style="flex:1" onclick="setEvent('+off+',600)">軽め<br><span class="xs muted">600kcal</span></button>'+
+    '<button class="ghost" style="flex:1" onclick="setEvent('+off+',1000)">普通<br><span class="xs muted">1,000kcal</span></button>'+
+    '<button class="ghost" style="flex:1" onclick="setEvent('+off+',1500)">がっつり<br><span class="xs muted">1,500kcal</span></button></div>')+'</div>';}
+ openModal('<h3>🍺 会食・飲み会の予定</h3>'+
+  '<div class="xs muted" style="margin-bottom:12px">先に登録すると「計画されたイベント」になります。当日は日中の食べ方ガイド＋叱責オフ、翌朝は自動でリカバリー支援に切り替わります。</div>'+
+  row(0,'今日の夜')+row(1,'明日の夜')+
+  '<div class="xs muted">会食の鉄則：①昼までにタンパク質25g＋米 ②酒は3杯まで＋1杯ごとに炭酸水 ③締めの麺・米だけ回避</div>');};
+window.setEvent=function(off,k){const ds=relDate(off);D(ds).event={kcal:k};
+ save();closeModal();render();toast('✓ '+(off?'明日':'今日')+'の会食を登録（枠'+k.toLocaleString()+'kcal）');};
+window.clearEvent=function(ds){delete D(ds).event;save();closeModal();render();toast('会食予定を解除しました');};
 window.addCardio=function(){const t=document.getElementById('cdtype').value,m=parseInt(document.getElementById('cdmin').value);
  if(!m){toast('分数を入力してください');return;}D(curDate).cardio.push({type:t,min:m});saveR();};
 const METS={'インクラインウォーク':6,'ランニング':9.8,'バイク':7,'ウォーキング':3.5,'水泳':8,'その他':5};
@@ -832,6 +863,7 @@ function trainTab(){
       const tgt=(prev&&prev.top)?Math.round(prev.top*pct/100/2.5)*2.5:null;
       return '<div class="xs" style="color:var(--bad);margin-top:4px">🦴 脊柱負荷種目 — 痛みが残るなら「'+(ALT_EX[ex]||'マシン系')+'」で代替を</div>'+
        (tgt?'<div class="xs" style="color:var(--f)">復帰目安 '+tgt+'kg（直近'+prev.top+'kgの'+pct+'%・痛みゼロなら週+10%）</div>':'');})()+
+    (function(){const tg=exTarget(ex);return tg?'<div class="xs" style="color:var(--accent);margin-top:4px;font-weight:700">🎯 今日の目標: '+tg.label+'</div>':'';})()+
     (exMode(ex)!=='cardio'?'<div class="xs muted" style="margin-top:4px">⏱ レスト '+fmtClock(exRest(ex))+' <span style="color:var(--accent)" onclick="editRest(\''+ex+'\')">変更</span> ・ ✓を押すと自動でタイマー開始</div>':'')+
     sets.map((s,i)=>{const md=exMode(ex);
      if(md==='cardio')return '<div class="setrow" style="flex-wrap:wrap">'+
@@ -853,6 +885,12 @@ function trainTab(){
     (function(){if(exMode(ex)!=='wt'||!prev||prev.top==null||prev.top<=0)return '';
       const jump=sets.some(function(s){return s.w!==''&&s.w!=null&&parseFloat(s.w)>prev.top*1.05+0.001;});
       return jump?'<div class="xs" style="color:var(--bad);margin-top:6px">⚠️ 前回トップ'+prev.top+'kgから+5%超の重量です。ジャンプは1段階（'+wStep(ex)+'kg）ずつが安全（117.5kg事件を忘れるな）</div>':'';})()+
+    (function(){if(exMode(ex)==='cardio'||!sets.some(function(s){return s.d;}))return '';
+      const cur=(logs&&D(curDate).wk&&D(curDate).wk.rpeMap)?D(curDate).wk.rpeMap[ex]:null;
+      return '<div class="row" style="gap:6px;margin-top:8px"><span class="xs muted">手応え:</span>'+
+       [['easy','余裕'],['ok','丁度'],['hard','限界']].map(function(o2){
+        return '<button class="chip'+(cur===o2[0]?' on':'')+'" style="padding:4px 12px;font-size:11px" onclick="setRpe(\''+ex+'\',\''+o2[0]+'\')">'+o2[1]+'</button>';}).join('')+
+       '<span class="xs muted">→次回の目標に反映</span></div>';})()+
     '<button class="ghost" style="margin-top:8px;width:100%" onclick="addSet(\''+ex+'\')">＋ セット追加</button>'+
    '</div>';
   }).join('')+
@@ -950,7 +988,32 @@ function prevLog(ex){const ds=Object.keys(S.days).filter(d=>d<curDate&&S.days[d]
  if(!ds.length)return null;const d=ds[ds.length-1];const sets=S.days[d].wk.logs[ex].filter(s=>s.r||s.w||s.min);
  const txt=sets.map(s=>fmtSet(s,ex)).join(', ');
  let top=null;sets.forEach(s=>{if(s.w!==''&&s.w!=null&&(top==null||s.w>top))top=s.w;});
- return {d:d,txt:txt,top:top,last:sets[sets.length-1]};}
+ const rpe=S.days[d].wk.rpeMap?S.days[d].wk.rpeMap[ex]:null;
+ return {d:d,txt:txt,top:top,last:sets[sets.length-1],sets:sets,rpe:rpe};}
+const RPE_LABEL={easy:'余裕',ok:'丁度',hard:'限界'};
+function exTarget(ex){
+ if(exMode(ex)==='cardio')return null;
+ if(S.injury&&EXDB[ex]&&EXDB[ex].spine)return null;
+ const p=prevLog(ex);if(!p||!p.sets||!p.sets.length)return null;
+ const g=EXDB[ex];if(!g||!g.sr)return null;
+ const m=g.sr.match(/(\d+)セット×(\d+)(?:-(\d+))?/);
+ if(!m){const tot=p.sets.reduce(function(a,s){return a+(parseFloat(s.r)||0);},0);
+  return tot?{label:'前回合計'+tot+'回 → 今日は'+(tot+1)+'回'}:null;}
+ const nSets=parseInt(m[1]),lo=parseInt(m[2]),hi=m[3]?parseInt(m[3]):lo;
+ if(exMode(ex)==='bw'){
+  const minR=Math.min.apply(null,p.sets.map(function(s){return parseFloat(s.r)||0;}));
+  const everyHi=p.sets.length>=nSets&&p.sets.every(function(s){return (parseFloat(s.r)||0)>=hi;});
+  return everyHi?{label:'全セット'+hi+exUnit(ex)+'達成済み → '+(hi+ (exUnit(ex)==='秒'?15:2))+exUnit(ex)+'に挑戦'}
+   :{label:'全セット'+Math.min(hi,minR+1)+exUnit(ex)+'以上を狙う'};}
+ const top=p.top||0;if(!top)return null;
+ const everyHi=p.sets.length>=nSets&&p.sets.every(function(s){return (parseFloat(s.r)||0)>=hi;});
+ if(everyHi&&p.rpe!=='hard'){
+  const nw=Math.round((top+wStep(ex))*10)/10;
+  return {label:'重量UP！ '+nw+'kg×'+lo+'回〜（前回'+top+'kgで全セット上限クリア'+(p.rpe==='easy'?'・余裕あり':'')+'）'};}
+ const minR=Math.min.apply(null,p.sets.map(function(s){return parseFloat(s.r)||0;}));
+ return {label:top+'kg×'+Math.min(hi,minR+1)+'回以上を全セット（'+hi+'回×'+nSets+'セットで次回重量UP）'+(p.rpe==='hard'?'・前回は限界。同重量で丁寧に':'')};}
+window.setRpe=function(ex,v){const wk=ensureWk();if(!wk.rpeMap)wk.rpeMap={};
+ wk.rpeMap[ex]=(wk.rpeMap[ex]===v)?null:v;saveR();};
 window.openGuide=function(ex){const g=EXDB[ex];
  if(!g){openModal('<h3>'+ex+'</h3><div class="muted small">カスタム種目のためガイドはありません。</div>');return;}
  openModal('<h3>'+ex+'</h3><div class="small muted">'+g.t+'　｜　'+g.sr+'</div>'+
@@ -1089,7 +1152,9 @@ window.weeklyReview=function(){
   let wk='休み';
   if(o.wk&&o.wk.logs&&Object.keys(o.wk.logs).length){
    const parts=Object.keys(o.wk.logs).map(ex=>{const sets=o.wk.logs[ex].filter(s=>s.r||s.w||s.min);
-    if(!sets.length)return null;return ex+' '+sets.map(s=>fmtSet(s,ex)).join('/');}).filter(Boolean);
+    if(!sets.length)return null;
+    const rp=o.wk.rpeMap&&o.wk.rpeMap[ex]?'(手応え:'+RPE_LABEL[o.wk.rpeMap[ex]]+')':'';
+    return ex+' '+sets.map(s=>fmtSet(s,ex)).join('/')+rp;}).filter(Boolean);
    if(parts.length)wk=(MENUS[o.wk.menu]?MENUS[o.wk.menu].name:'')+'：'+parts.join('、');
   }
   const cardio=(o.cardio||[]).map(c=>c.type+c.min+'分(約'+cardioKcal(c.type,c.min,ds)+'kcal)').join('、')||'なし';
@@ -1101,7 +1166,7 @@ window.weeklyReview=function(){
     return mn+'['+its.map(function(m){return m.n+(m.q&&m.q!==1?'×'+m.q:'');}).join('・')+']';
    }).filter(Boolean).join(' ');
   }
-  lines.push(fmtShort(ds)+'｜体重'+(o.weight!=null?o.weight+'kg':'未計測')+(o.bf!=null?'/'+o.bf+'%':'')+(o.waist!=null?'/ウエスト'+o.waist+'cm':'')+
+  lines.push(fmtShort(ds)+(o.event?'【会食日・枠'+o.event.kcal+'kcal】':'')+'｜体重'+(o.weight!=null?o.weight+'kg':'未計測')+(o.bf!=null?'/'+o.bf+'%':'')+(o.waist!=null?'/ウエスト'+o.waist+'cm':'')+
    '｜摂取'+t.k+'kcal P'+t.p+' F'+t.f+' C'+t.c+'（スイーツ'+t.sw+'kcal）'+
    '｜食事内容：'+meals+
    '｜水分'+((o.water||0)/1000).toFixed(1)+'L｜睡眠'+(o.sleep!=null?o.sleep+'h':'未記録')+
