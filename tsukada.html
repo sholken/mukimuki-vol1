@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0B0B0D">
+<meta name="robots" content="noindex, nofollow">
+<title>ムキムキ計画 塚田バージョン</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230B0B0D'/><text x='14' y='78' font-size='72' fill='%23F0865A'>✳</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0B0D; --card:#161519; --card2:#1E1C21; --line:#27242B;
+  --txt:#F2EFE6; --muted:#8E897B; --accent:#F0865A; --accent2:#C2543A;
+  --p:#E3B85C; --f:#C9785A; --c:#7FA39B; --ok:#9BC47F; --bad:#D9685A; --sweet:#F0865A;
+  --water:#6B97C2;
+  --num:'Oswald','Avenir Next Condensed','Arial Narrow',sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font-family:'Zen Kaku Gothic New',-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom));}
+header{position:sticky;top:0;z-index:20;background:rgba(11,11,13,.92);backdrop-filter:blur(12px);
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line);}
+.hrow{display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:var(--num);font-weight:600;font-size:12px;letter-spacing:2.5px;white-space:nowrap;color:var(--accent);}
+.logo .v{color:var(--muted);}
+.datenav{display:flex;align-items:center;gap:5px;}
+.datenav button{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:6px 9px;font-size:13px;}
+.datenav .cur{font-weight:700;min-width:80px;text-align:center;font-size:12px;white-space:nowrap;color:var(--txt);}
+main{padding:14px 14px 0;max-width:560px;margin:0 auto;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;}
+.card h3{margin:0 0 10px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:2px;}
+.big{font-family:var(--num);font-size:32px;font-weight:600;}
+.num{font-family:var(--num);font-weight:600;}
+.muted{color:var(--muted);} .small{font-size:12px;} .xs{font-size:11px;}
+.row{display:flex;align-items:center;gap:8px;} .between{justify-content:space-between;}
+.wrap{flex-wrap:wrap;}
+button.btn{background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:#1A1407;
+  font-weight:900;border-radius:12px;padding:13px 16px;font-size:14px;width:100%;}
+button.btn:active{opacity:.85;}
+button.btn.wk{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-family:var(--num);letter-spacing:1px;}
+button.ghost{background:var(--card2);border:1px solid var(--line);color:var(--txt);
+  border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600;}
+button.mini{background:var(--card2);border:1px solid var(--line);color:var(--accent);
+  border-radius:9px;padding:6px 10px;font-size:13px;font-weight:700;}
+input,select,textarea{background:var(--card2);border:1px solid var(--line);color:var(--txt);
+  border-radius:9px;padding:8px 10px;font-size:16px;}
+input[type=number]{width:78px;text-align:center;}
+.hero{display:flex;align-items:baseline;justify-content:center;gap:2px;}
+.hero input{font-family:var(--num);font-size:78px;font-weight:600;background:none;border:none;
+  color:var(--txt);text-align:center;width:188px;padding:0;line-height:1.05;}
+.hero input::placeholder{color:#3A3730;}
+.hero .kg{font-family:var(--num);font-size:24px;font-weight:600;color:var(--accent);}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;}
+.tile .tl{font-size:10px;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.tile .tv{font-family:var(--num);font-size:26px;font-weight:600;}
+.tile .tu{font-size:12px;color:var(--muted);font-weight:600;}
+.tile .ts{font-size:10px;color:var(--accent);margin-top:4px;}
+.tile input.tin{font-family:var(--num);font-size:26px;font-weight:600;background:none;border:none;
+  width:80px;text-align:center;color:var(--txt);padding:0;}
+.tile input.tin::placeholder{color:#3A3730;}
+.stepbtn{width:30px;height:30px;border-radius:9px;background:var(--card2);border:1px solid var(--line);
+  color:var(--txt);font-size:16px;font-weight:700;flex:0 0 auto;}
+.stepbtn.gold{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1A1407;border:none;}
+.glink{color:var(--accent);font-size:12px;font-weight:700;text-decoration:none;}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
+.chip{flex:0 0 auto;background:var(--card2);border:1px solid var(--line);color:var(--muted);
+  border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;}
+.chip.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#1A1407;border-color:transparent;font-weight:800;}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;background:rgba(16,15,18,.96);
+  backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:7px 4px calc(7px + env(safe-area-inset-bottom));}
+nav button{flex:1;background:none;border:none;color:#56524A;font-size:10px;font-weight:700;
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;}
+nav button .ic{display:flex;}
+nav button.on{color:var(--accent);}
+.bar{height:10px;background:#26242B;border-radius:99px;overflow:hidden;}
+.bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s;}
+.bar.blue>i{background:var(--water);} .bar.sweet>i{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.goalnum{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.pill{border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;}
+.pill.ok{background:rgba(155,196,127,.13);color:var(--ok);} .pill.bad{background:rgba(217,104,90,.15);color:var(--bad);}
+.pill.gold{background:rgba(240,134,90,.13);color:var(--accent);}
+.pill.dim{background:var(--card2);color:var(--muted);border:1px solid var(--line);}
+.nrow{display:flex;align-items:center;gap:8px;margin-top:9px;}
+.nlabel{width:64px;font-size:12px;font-weight:700;flex:0 0 auto;}
+.nbar{flex:1;height:8px;background:#26242B;border-radius:99px;overflow:hidden;}
+.nbar>i{display:block;height:100%;border-radius:99px;transition:width .3s;}
+.nval{width:80px;text-align:right;font-size:11px;color:var(--muted);font-weight:700;flex:0 0 auto;font-family:var(--num);}
+.judge{font-size:10px;border-radius:99px;padding:3px 8px;font-weight:700;flex:0 0 auto;width:58px;text-align:center;}
+.coach{display:flex;gap:10px;align-items:flex-start;}
+.cavatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1A1407;
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto;}
+.cbubble{background:var(--card2);border-radius:3px 14px 14px 14px;padding:10px 13px;font-size:13px;line-height:1.7;}
+.mealgrp{border-top:1px solid var(--line);padding-top:8px;margin-top:8px;}
+.fooditem{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line);}
+.fooditem:last-child{border-bottom:none;}
+.qty{display:flex;align-items:center;gap:6px;}
+.qty button{width:28px;height:28px;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:var(--accent);font-size:16px;font-weight:700;}
+.excard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;}
+.exname{font-weight:700;font-size:15px;color:var(--accent);}
+.setrow{display:flex;align-items:center;gap:4px;margin-top:7px;}
+.setn{font-family:var(--num);font-size:10px;color:var(--muted);width:34px;flex:0 0 auto;letter-spacing:.5px;}
+.sv{font-family:var(--num);font-size:17px;font-weight:600;width:52px;text-align:center;flex:0 0 auto;}
+.sv i{font-style:normal;font-size:10px;color:var(--muted);margin-left:1px;}
+.donebtn{width:30px;height:30px;border-radius:9px;background:transparent;border:1px solid var(--line);
+  color:var(--muted);font-size:14px;font-weight:800;flex:0 0 auto;}
+.donebtn.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1A1407;border:none;}
+.delx{background:none;border:none;color:#56524A;font-size:15px;padding:2px 4px;}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:50;display:none;align-items:flex-end;justify-content:center;}
+#modal.show{display:flex;}
+.sheet{background:#141317;border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:86vh;
+  overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;}
+.sheet h3{margin:2px 0 12px;font-size:16px;font-weight:700;}
+.sheetclose{position:sticky;top:-16px;float:right;margin:-4px -4px 0 0;background:var(--card2);border:1px solid var(--line);
+  color:var(--txt);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:800;z-index:5;}
+.foodrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line);}
+.foodrow .nm{font-size:14px;font-weight:600;}
+.foodrow .meta{font-size:11px;color:var(--muted);font-family:var(--num);}
+.addbtn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#1A1407;border-radius:10px;
+  width:34px;height:34px;font-size:19px;font-weight:800;flex:0 0 auto;}
+#toast{position:fixed;left:50%;top:45%;transform:translate(-50%,-50%) scale(.95);background:#F2EFE6;color:#1A1407;
+  padding:16px 26px;border-radius:16px;font-size:15px;font-weight:800;z-index:99;opacity:0;
+  transition:opacity .25s,transform .25s;pointer-events:none;border:2px solid var(--accent2);
+  box-shadow:0 8px 30px rgba(0,0,0,.6);text-align:center;max-width:80vw;}
+#toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+#rest{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));z-index:40;display:none;
+  justify-content:center;}
+#rest.show{display:flex;}
+.restbar{background:#161519;border:1.5px solid var(--accent2);border-radius:14px;padding:8px 10px;
+  display:flex;align-items:center;gap:8px;box-shadow:0 6px 24px rgba(0,0,0,.55);max-width:540px;width:calc(100% - 24px);}
+.restbar .rt{font-family:var(--num);font-size:30px;font-weight:600;color:var(--accent);min-width:74px;text-align:center;letter-spacing:1px;}
+.restbar.done .rt{color:var(--ok);}
+.restbar .rex{font-size:11px;color:var(--muted);font-weight:700;flex:1;line-height:1.3;}
+.restbar button{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:8px 9px;font-size:12px;font-weight:700;flex:0 0 auto;}
+.restbar button.skip{background:var(--accent2);color:#1A1407;border:none;}
+.guide li{margin-bottom:6px;font-size:14px;line-height:1.6;}
+.guide .tip{color:var(--accent);}
+table.rep{width:100%;border-collapse:collapse;font-size:12px;}
+table.rep td,table.rep th{border-bottom:1px solid var(--line);padding:5px 4px;text-align:left;}
+details{margin-top:8px;} summary{font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;}
+.photogrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.photogrid .ph{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line);}
+.photogrid img{width:100%;height:110px;object-fit:cover;display:block;}
+.photogrid .pd{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 5px;display:flex;justify-content:space-between;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+label.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:700;}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div class="logo">MUKIMUKI <span class="v">TSUKADA KETO</span></div>
+    <div class="datenav">
+      <button onclick="shiftDate(-1)">‹</button>
+      <button class="cur" onclick="goToday()" id="dlabel"></button>
+      <button onclick="shiftDate(1)">›</button>
+    </div>
+  </div>
+</header>
+<main id="view"></main>
+<nav id="nav"></nav>
+<div id="modal" onclick="if(event.target===this)closeModal()"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+<div id="rest"><div class="restbar" id="restbar"></div></div>
+
+<script>
+/* ================= データ ================= */
+const LS='mukimuki_tsukada_v1';
+const DEF_PROFILE={height:170,startDate:'2026-07-29',startWeight:88,startBF:25,
+  goalWeight:70,goalBF:8,goalDate:'2026-10-15',kcal:1800,p:160,f:120,c:20,
+  water:3500,sleep:7,sweets:50,name:'TSUKADA'};
+
+const FOODS=[
+/* ケト向き */
+{id:'k1',cat:'keto',n:'バターコーヒー(MCT+バター)',k:200,p:0,f:22,c:0},
+{id:'k2',cat:'keto',n:'MCTオイル(大さじ1)',k:120,p:0,f:14,c:0},
+{id:'k3',cat:'keto',n:'アボカド(1個)',k:260,p:3,f:26,c:6},
+{id:'k4',cat:'keto',n:'卵3個のバター炒め',k:280,p:19,f:22,c:0.7},
+{id:'k5',cat:'keto',n:'ベーコンエッグ(卵2+ベーコン2)',k:330,p:19,f:27,c:1},
+{id:'k6',cat:'keto',n:'サバ缶(水煮1缶)',k:340,p:31,f:24,c:0.2},
+{id:'k7',cat:'keto',n:'牛カルビ焼肉(塩・150g)',k:560,p:19,f:53,c:0.3},
+{id:'k8',cat:'keto',n:'豚バラ焼き(150g)',k:530,p:22,f:53,c:0.2},
+{id:'k9',cat:'keto',n:'鶏もも皮つきソテー(150g)',k:285,p:26,f:20,c:0},
+{id:'k10',cat:'keto',n:'カマンベールチーズ(1/2個)',k:155,p:9.5,f:12.4,c:0.5},
+{id:'k11',cat:'keto',n:'ミックスナッツ(25g)',k:160,p:5,f:14,c:3},
+{id:'k12',cat:'keto',n:'糖質0麺(1袋)',k:15,p:0.9,f:0.3,c:1.4},
+{id:'k13',cat:'keto',n:'ブロッコリー+マヨ(100g)',k:110,p:4.5,f:8.5,c:5},
+{id:'k14',cat:'keto',n:'ゆで卵+マヨ(2個)',k:230,p:13,f:19,c:1},
+{id:'k15',cat:'keto',n:'刺身盛り合わせ(8切)',k:150,p:22,f:6,c:1},
+{id:'k16',cat:'keto',n:'焼き鳥(もも塩3本)',k:255,p:27,f:15,c:1.5},
+{id:'k17',cat:'keto',n:'チーズinウインナー(3本)',k:240,p:9,f:21,c:2},
+{id:'k18',cat:'keto',n:'ギリシャヨーグルト(無糖・脂肪あり100g)',k:100,p:9,f:5,c:4},
+{id:'k19',cat:'keto',n:'アーモンドミルク(無糖200ml)',k:30,p:1,f:2.5,c:0.6},
+{id:'k20',cat:'keto',n:'サラダチキン+オリーブ油がけ',k:200,p:24,f:11,c:0.5},
+/* コンビニ */
+{id:'f1',cat:'conv',n:'サラダチキン(プレーン)',k:110,p:24,f:1.5,c:0.3},
+{id:'f2',cat:'conv',n:'サラダチキンバー',k:70,p:13,f:1,c:1},
+{id:'f3',cat:'conv',n:'ゆで卵(味付き1個)',k:66,p:6,f:4.4,c:0.6},
+{id:'f4',cat:'conv',n:'グリルチキン(柚子胡椒等)',k:130,p:20,f:4.5,c:2},
+{id:'f5',cat:'conv',n:'焼き鳥(もも塩2本)',k:170,p:18,f:10,c:1},
+{id:'f6',cat:'conv',n:'ブランパン(2個)',k:130,p:11,f:5,c:14},
+{id:'f7',cat:'conv',n:'サンドイッチ(ハムレタス)',k:250,p:10,f:12,c:26},
+{id:'f8',cat:'conv',n:'サンドイッチ(たまご)',k:320,p:10,f:19,c:27},
+{id:'f9',cat:'conv',n:'パスタ(ミートソース)',k:560,p:20,f:16,c:82},
+{id:'f10',cat:'conv',n:'冷やし中華',k:470,p:17,f:12,c:72},
+{id:'f11',cat:'conv',n:'ざるそば',k:400,p:14,f:3,c:78},
+{id:'f12',cat:'conv',n:'幕の内弁当',k:700,p:24,f:20,c:102},
+{id:'f13',cat:'conv',n:'のり弁当',k:730,p:19,f:24,c:108},
+{id:'f14',cat:'conv',n:'親子丼(コンビニ)',k:600,p:24,f:14,c:92},
+{id:'f15',cat:'conv',n:'千切りキャベツ(袋)',k:39,p:2,f:0.2,c:8},
+{id:'f16',cat:'conv',n:'グリーンサラダ(ドレ込)',k:90,p:2,f:6,c:8},
+{id:'f17',cat:'conv',n:'豚しゃぶサラダ',k:180,p:14,f:10,c:8},
+{id:'f18',cat:'conv',n:'おでん(卵+大根+しらたき)',k:110,p:8,f:5,c:8},
+/* 主食 */
+{id:'f20',cat:'staple',n:'おにぎり(鮭)',k:180,p:4.5,f:1.8,c:36},
+{id:'f21',cat:'staple',n:'おにぎり(ツナマヨ)',k:235,p:4.5,f:8.5,c:35},
+{id:'f22',cat:'staple',n:'おにぎり(梅)',k:170,p:3,f:1,c:38},
+{id:'f23',cat:'staple',n:'おにぎり(昆布)',k:175,p:3.5,f:1,c:38},
+{id:'f24',cat:'staple',n:'白米150g(茶碗1杯)',k:234,p:3.8,f:0.5,c:53},
+{id:'f25',cat:'staple',n:'白米200g(大盛)',k:312,p:5,f:0.6,c:71},
+{id:'f26',cat:'staple',n:'玄米150g',k:228,p:4.2,f:1.5,c:51},
+{id:'f27',cat:'staple',n:'食パン6枚切(1枚)',k:158,p:5.6,f:2.6,c:28},
+{id:'f28',cat:'staple',n:'オートミール40g',k:152,p:5.5,f:2.3,c:25},
+{id:'f29',cat:'staple',n:'うどん(1玉)',k:250,p:6.5,f:1,c:54},
+{id:'f30',cat:'staple',n:'パスタ乾80g(茹で)',k:302,p:10.3,f:1.5,c:58},
+{id:'f31',cat:'staple',n:'バナナ(1本)',k:86,p:1.1,f:0.2,c:22},
+/* 自炊おかず */
+{id:'f40',cat:'cook',n:'鶏むね肉(皮なし)100g',k:108,p:22.3,f:1.5,c:0},
+{id:'f41',cat:'cook',n:'鶏もも肉(皮つき)100g',k:190,p:17,f:13,c:0},
+{id:'f42',cat:'cook',n:'豚ロース100g',k:248,p:19,f:19,c:0.3},
+{id:'f43',cat:'cook',n:'牛もも100g',k:196,p:19,f:13,c:0.5},
+{id:'f44',cat:'cook',n:'鮭(1切れ80g)',k:110,p:18,f:3.6,c:0.1},
+{id:'f45',cat:'cook',n:'サバ(1切れ80g)',k:162,p:16.5,f:10.7,c:0.2},
+{id:'f46',cat:'cook',n:'卵(1個)',k:76,p:6.2,f:5.2,c:0.2},
+{id:'f47',cat:'cook',n:'納豆(1パック)',k:95,p:8.3,f:5,c:6},
+{id:'f48',cat:'cook',n:'豆腐(絹150g)',k:84,p:8,f:5,c:2.5},
+{id:'f49',cat:'cook',n:'味噌汁(1杯)',k:40,p:3,f:1.5,c:5},
+{id:'f50',cat:'cook',n:'ブロッコリー100g',k:33,p:4.3,f:0.4,c:5},
+{id:'f51',cat:'cook',n:'野菜炒め(1皿)',k:150,p:6,f:9,c:12},
+{id:'f52',cat:'cook',n:'唐揚げ(5個)',k:350,p:22,f:22,c:14},
+{id:'f53',cat:'cook',n:'生姜焼き(おかずのみ)',k:350,p:22,f:24,c:10},
+{id:'f54',cat:'cook',n:'ハンバーグ(1個)',k:350,p:20,f:25,c:12},
+{id:'f55',cat:'cook',n:'餃子(自炊6個)',k:300,p:10,f:16,c:28},
+{id:'f56',cat:'cook',n:'カレーライス(自炊1皿)',k:700,p:18,f:25,c:100},
+{id:'f57',cat:'cook',n:'オイコス(無糖)',k:92,p:10,f:0,c:12},
+{id:'f58',cat:'cook',n:'ヨーグルト(無糖100g)',k:56,p:3.6,f:3,c:4.9},
+/* 外食 */
+{id:'f60',cat:'out',n:'ラーメン(醤油)',k:700,p:26,f:18,c:100},
+{id:'f61',cat:'out',n:'ラーメン(豚骨)',k:850,p:30,f:35,c:95},
+{id:'f62',cat:'out',n:'ラーメン(味噌)',k:800,p:28,f:26,c:104},
+{id:'f63',cat:'out',n:'二郎系ラーメン(小)',k:1400,p:50,f:60,c:160},
+{id:'f64',cat:'out',n:'チャーシュー麺',k:950,p:40,f:38,c:100},
+{id:'f65',cat:'out',n:'替え玉',k:200,p:7,f:1,c:40},
+{id:'f66',cat:'out',n:'餃子(店・6個)',k:350,p:12,f:18,c:32},
+{id:'f67',cat:'out',n:'チャーハン',k:700,p:15,f:25,c:100},
+{id:'f68',cat:'out',n:'牛丼(並)',k:635,p:20,f:20,c:92},
+{id:'f69',cat:'out',n:'牛丼(大盛)',k:846,p:26,f:27,c:121},
+{id:'f70',cat:'out',n:'寿司(10貫)',k:500,p:25,f:5,c:80},
+{id:'f71',cat:'out',n:'焼き魚定食',k:550,p:30,f:15,c:70},
+{id:'f72',cat:'out',n:'唐揚げ定食',k:850,p:35,f:35,c:95},
+{id:'f73',cat:'out',n:'ビッグマック',k:530,p:26,f:28,c:42},
+{id:'f74',cat:'out',n:'マックポテト(M)',k:410,p:5,f:21,c:51},
+{id:'f75',cat:'out',n:'焼肉(カルビ5枚)',k:400,p:14,f:36,c:2},
+/* スイーツ */
+{id:'f80',cat:'sweet',n:'シュークリーム',k:220,p:4,f:14,c:19,sw:1},
+{id:'f81',cat:'sweet',n:'プリン',k:140,p:3,f:5,c:20,sw:1},
+{id:'f82',cat:'sweet',n:'ショートケーキ',k:350,p:5,f:22,c:32,sw:1},
+{id:'f83',cat:'sweet',n:'チョコレート(25g)',k:140,p:2,f:9,c:13,sw:1},
+{id:'f84',cat:'sweet',n:'ハーゲンダッツ',k:244,p:4.6,f:16.3,c:19.9,sw:1},
+{id:'f85',cat:'sweet',n:'スーパーカップ',k:374,p:5.6,f:23.6,c:36,sw:1},
+{id:'f86',cat:'sweet',n:'ポテチ(半袋30g)',k:166,p:1.4,f:10.6,c:16,sw:1},
+{id:'f87',cat:'sweet',n:'どら焼き',k:230,p:4,f:2.5,c:49,sw:1},
+{id:'f88',cat:'sweet',n:'大福',k:235,p:4,f:0.5,c:50,sw:1},
+{id:'f89',cat:'sweet',n:'クッキー(2枚)',k:100,p:1.2,f:5,c:13,sw:1},
+{id:'f90',cat:'sweet',n:'メロンパン',k:350,p:6,f:10,c:58,sw:1},
+{id:'f91',cat:'sweet',n:'キットカット(1枚)',k:64,p:0.8,f:3.6,c:7,sw:1},
+{id:'f92',cat:'sweet',n:'コーラ(500ml)',k:225,p:0,f:0,c:56,sw:1},
+{id:'f93',cat:'sweet',n:'カフェラテ(加糖)',k:120,p:4,f:4.5,c:16,sw:1},
+/* プロテイン・飲料 */
+{id:'f95',cat:'drink',n:'ホエイプロテイン(1杯)',k:117,p:22,f:1.7,c:2.7},
+{id:'f96',cat:'drink',n:'ザバスミルクプロテイン',k:102,p:15,f:0,c:10.4},
+{id:'f97',cat:'drink',n:'プロテインバー',k:209,p:15,f:8.5,c:13},
+{id:'f98',cat:'drink',n:'牛乳(200ml)',k:137,p:6.8,f:7.8,c:9.9},
+{id:'f99',cat:'drink',n:'調整豆乳(200ml)',k:116,p:7.2,f:7.7,c:4.8},
+{id:'f100',cat:'drink',n:'オレンジジュース(200ml)',k:84,p:0.8,f:0,c:21},
+/* === 追加 === */
+/* コンビニ */
+{id:'f110',cat:'conv',n:'サラダチキン(ハーブ)',k:115,p:24,f:1.8,c:1},
+{id:'f111',cat:'conv',n:'サラダチキン(スモーク)',k:108,p:23,f:1.5,c:0.8},
+{id:'f112',cat:'conv',n:'ファミチキ',k:242,p:13,f:15,c:13},
+{id:'f113',cat:'conv',n:'からあげクン(5個)',k:230,p:14,f:15,c:9},
+{id:'f114',cat:'conv',n:'焼き鳥(つくね2本)',k:200,p:14,f:12,c:8},
+{id:'f115',cat:'conv',n:'ゆで卵(1個)',k:65,p:6.5,f:4.4,c:0.3},
+{id:'f116',cat:'conv',n:'チーズ(6Pチーズ1個)',k:54,p:3.4,f:4.3,c:0.3},
+{id:'f117',cat:'conv',n:'プロテインヨーグルト(高たんぱく)',k:100,p:11,f:0,c:14},
+{id:'f118',cat:'conv',n:'冷奴・小鉢',k:80,p:7,f:4.5,c:2.5},
+{id:'f119',cat:'conv',n:'ひじき煮(小鉢)',k:60,p:2,f:3,c:6},
+{id:'f120',cat:'conv',n:'枝豆(1袋)',k:120,p:11,f:5,c:8},
+{id:'f121',cat:'conv',n:'もずく酢(1パック)',k:25,p:1,f:0,c:5},
+{id:'f122',cat:'conv',n:'カットサラダ(緑のみ)',k:25,p:1.5,f:0.2,c:4},
+{id:'f123',cat:'conv',n:'海藻サラダ',k:45,p:1.5,f:1,c:7},
+{id:'f124',cat:'conv',n:'おにぎり(明太子)',k:180,p:4.5,f:1.5,c:37},
+{id:'f125',cat:'conv',n:'おにぎり(鶏五目)',k:200,p:5,f:3,c:38},
+{id:'f126',cat:'conv',n:'豚汁(1杯)',k:120,p:7,f:6,c:10},
+{id:'f127',cat:'conv',n:'チキン&エッグサラダ',k:200,p:18,f:11,c:6},
+{id:'f128',cat:'conv',n:'冷やし中華(コンビニ)',k:430,p:16,f:11,c:66},
+{id:'f129',cat:'conv',n:'蕎麦(温・かけ)',k:320,p:12,f:2,c:62},
+/* 主食 */
+{id:'f130',cat:'staple',n:'白米100g(小盛)',k:156,p:2.5,f:0.3,c:35},
+{id:'f131',cat:'staple',n:'白米250g(丼)',k:390,p:6.3,f:0.8,c:88},
+{id:'f132',cat:'staple',n:'玄米200g',k:304,p:5.6,f:2,c:68},
+{id:'f133',cat:'staple',n:'もち麦ごはん150g',k:220,p:4,f:0.6,c:48},
+{id:'f134',cat:'staple',n:'食パン8枚切(1枚)',k:118,p:4.2,f:2,c:21},
+{id:'f135',cat:'staple',n:'ロールパン(1個)',k:95,p:3,f:2.5,c:14},
+{id:'f136',cat:'staple',n:'さつまいも(150g)',k:198,p:1.8,f:0.3,c:47},
+{id:'f137',cat:'staple',n:'じゃがいも(150g)',k:89,p:2.4,f:0.2,c:25},
+{id:'f138',cat:'staple',n:'オートミール30g',k:114,p:4.1,f:1.7,c:18.7},
+{id:'f139',cat:'staple',n:'パスタ乾100g(茹で)',k:378,p:12.9,f:1.9,c:73},
+{id:'f140',cat:'staple',n:'うどん(冷凍1玉)',k:230,p:5.5,f:0.8,c:50},
+{id:'f141',cat:'staple',n:'そうめん(2束茹で)',k:250,p:8,f:1,c:52},
+/* 自炊 */
+{id:'f150',cat:'cook',n:'鶏むね肉(皮なし)150g',k:162,p:33.5,f:2.3,c:0},
+{id:'f151',cat:'cook',n:'鶏ささみ(2本100g)',k:98,p:23,f:0.7,c:0},
+{id:'f152',cat:'cook',n:'豚もも赤身100g',k:148,p:21,f:6,c:0.2},
+{id:'f153',cat:'cook',n:'牛赤身ステーキ150g',k:280,p:30,f:17,c:0.6},
+{id:'f154',cat:'cook',n:'まぐろ赤身(刺身100g)',k:115,p:26,f:1.4,c:0.1},
+{id:'f155',cat:'cook',n:'かつお(刺身100g)',k:114,p:25,f:0.5,c:0.1},
+{id:'f156',cat:'cook',n:'えび(6尾)',k:50,p:11,f:0.3,c:0},
+{id:'f157',cat:'cook',n:'いか(刺身100g)',k:80,p:18,f:0.8,c:0.2},
+{id:'f158',cat:'cook',n:'卵2個(目玉焼き)',k:180,p:13,f:13,c:0.5},
+{id:'f159',cat:'cook',n:'鮭の塩焼き(1切れ)',k:140,p:22,f:5,c:0.1},
+{id:'f160',cat:'cook',n:'鶏むねのソテー(150g・油少)',k:200,p:33,f:6,c:1},
+{id:'f161',cat:'cook',n:'ほうれん草おひたし',k:30,p:3,f:0.4,c:3},
+{id:'f162',cat:'cook',n:'きのこソテー',k:60,p:3,f:3,c:6},
+{id:'f163',cat:'cook',n:'キャベツ千切り(山盛)',k:40,p:2,f:0.2,c:8},
+{id:'f164',cat:'cook',n:'トマト(1個)',k:30,p:1,f:0.2,c:7},
+{id:'f165',cat:'cook',n:'アボカド(半分)',k:130,p:1.5,f:13,c:3},
+{id:'f166',cat:'cook',n:'キムチ(50g)',k:25,p:1.5,f:0.3,c:4},
+{id:'f167',cat:'cook',n:'プロテインパンケーキ',k:280,p:25,f:6,c:32},
+{id:'f168',cat:'cook',n:'親子丼(自炊・米込)',k:620,p:30,f:15,c:88},
+{id:'f169',cat:'cook',n:'鶏むねと野菜炒め(米なし)',k:280,p:30,f:10,c:14},
+/* 外食 */
+{id:'f180',cat:'out',n:'家系ラーメン',k:900,p:32,f:38,c:100},
+{id:'f181',cat:'out',n:'つけ麺(並)',k:850,p:30,f:18,c:130},
+{id:'f182',cat:'out',n:'天下一品(こってり)',k:950,p:28,f:45,c:105},
+{id:'f183',cat:'out',n:'回転寿司(12貫)',k:600,p:30,f:6,c:96},
+{id:'f184',cat:'out',n:'刺身定食',k:600,p:40,f:12,c:75},
+{id:'f185',cat:'out',n:'生姜焼き定食',k:850,p:35,f:35,c:95},
+{id:'f186',cat:'out',n:'ハンバーグ定食',k:950,p:38,f:45,c:90},
+{id:'f187',cat:'out',n:'天丼',k:800,p:18,f:22,c:125},
+{id:'f188',cat:'out',n:'カツ丼',k:950,p:32,f:32,c:130},
+{id:'f189',cat:'out',n:'うな重',k:750,p:32,f:25,c:95},
+{id:'f190',cat:'out',n:'焼肉(ハラミ5枚)',k:350,p:22,f:28,c:2},
+{id:'f191',cat:'out',n:'サイゼ・サラダ＋スープ',k:150,p:5,f:8,c:14},
+{id:'f192',cat:'out',n:'マック・チキンクリスプ',k:359,p:14,f:18,c:35},
+{id:'f193',cat:'out',n:'ケンタ(オリジナル1個)',k:237,p:18,f:14,c:8},
+{id:'f194',cat:'out',n:'立ち食いそば(かけ)',k:330,p:12,f:3,c:64},
+/* スイーツ */
+{id:'f200',cat:'sweet',n:'ハイカカオチョコ(2枚)',k:60,p:1,f:4.5,c:4,sw:1},
+{id:'f201',cat:'sweet',n:'アイス最中',k:280,p:4,f:14,c:34,sw:1},
+{id:'f202',cat:'sweet',n:'パフェ',k:450,p:7,f:22,c:55,sw:1},
+{id:'f203',cat:'sweet',n:'バースデーケーキ(1切れ大)',k:400,p:5,f:24,c:42,sw:1},
+{id:'f204',cat:'sweet',n:'たい焼き',k:210,p:5,f:1.5,c:45,sw:1},
+{id:'f205',cat:'sweet',n:'みたらし団子(1本)',k:120,p:2,f:0.3,c:27,sw:1},
+{id:'f206',cat:'sweet',n:'カステラ(1切れ)',k:160,p:3,f:2.5,c:31,sw:1},
+{id:'f207',cat:'sweet',n:'ビール(350ml)',k:140,p:1,f:0,c:11,sw:1},
+{id:'f208',cat:'sweet',n:'ハイボール(350ml)',k:70,p:0,f:0,c:0,sw:1},
+{id:'f209',cat:'sweet',n:'日本酒(1合)',k:185,p:0.7,f:0,c:8,sw:1},
+{id:'f210',cat:'sweet',n:'焼酎(水割り1杯)',k:70,p:0,f:0,c:0,sw:1},
+{id:'f211',cat:'sweet',n:'ドーナツ',k:230,p:3,f:13,c:25,sw:1},
+/* プロテイン・飲料 */
+{id:'f220',cat:'drink',n:'ホエイプロテイン(水・2杯)',k:234,p:44,f:3.4,c:5.4},
+{id:'f221',cat:'drink',n:'EAA/BCAA(1杯)',k:20,p:4,f:0,c:1},
+{id:'f222',cat:'drink',n:'無調整豆乳(200ml)',k:113,p:8,f:7,c:6},
+{id:'f223',cat:'drink',n:'プロテインバー(SIXPACK)',k:230,p:20,f:9,c:18},
+{id:'f224',cat:'drink',n:'ブラックコーヒー',k:8,p:0.4,f:0,c:1.4},
+{id:'f225',cat:'drink',n:'経口補水液(500ml)',k:50,p:0,f:0,c:12},
+{id:'f226',cat:'drink',n:'バナナ(運動前1本)',k:86,p:1.1,f:0.2,c:22},
+];
+const FOOD_CATS=[['keto','ケト'],['conv','コンビニ'],['staple','主食'],['cook','自炊'],['out','外食'],['sweet','スイーツ'],['drink','プロテイン'],['my','マイ食品']];
+
+/* ================= 筋トレ ================= */
+const MENUS={
+ chest:{name:'胸（大胸筋）',ex:['ベンチプレス','インクラインダンベルプレス','ダンベルフライ','ケーブルクロスオーバー','アブローラー']},
+ back:{name:'背中（広背筋・僧帽筋）',ex:['懸垂','ラットプルダウン','ダンベルロウ','シーテッドケーブルロウ','フェイスプル','ハンギングレッグレイズ']},
+ arms:{name:'腕・肩',ex:['ショルダープレス','サイドレイズ','リアデルトフライ','バーベルカール','ハンマーカール','トライセプスプッシュダウン','スカルクラッシャー']},
+ legs:{name:'脚（下半身）',ex:['バーベルスクワット','レッグプレス','ルーマニアンデッドリフト','レッグエクステンション','レッグカール','カーフレイズ(立位)']},
+ core:{name:'有酸素＋コア',ex:['インクラインウォーク','プランク','サイドプランク','バイシクルクランチ','デッドバグ']},
+ rest:{name:'レスト（休養）',ex:[]},
+};
+/* 毎日トレーニング：開始日から 胸→背中→腕肩→脚 の4日ローテ（休息日なし） */
+const ROTATION=['chest','back','arms','legs'];
+function menuForDate(ds){const d0=+new Date(S.profile.startDate+'T00:00:00'),d=+new Date(ds+'T00:00:00');
+ const n=Math.round((d-d0)/86400000);return ROTATION[((n%4)+4)%4];}
+const EXDB={
+'ベンチプレス':{t:'大胸筋・三角筋前部・三頭筋',sr:'4セット×8-10回',
+ steps:['ベンチに仰向け、目の位置がバーの真下','手幅は肩幅の1.5倍（81cmラインに薬指）','肩甲骨を寄せて下げ、軽くアーチ','肘を約45°に開き胸の下部へゆっくり下ろす','胸に触れたら足で地面を押しながら一気に挙上','肘をロックアウトして1レップ'],
+ tips:['お尻はベンチから絶対に浮かさない','下ろし2-3秒・上げ1秒のテンポ','一人ならセーフティバー必須','WU：バーのみ×10→40%×8→60%×5']},
+'インクラインダンベルプレス':{t:'大胸筋上部・三角筋前部',sr:'3セット×10-12回',db:1,
+ steps:['ベンチを30°に設定','ダンベルを膝で蹴り上げてスタートポジションへ','手のひら正面、肩の真上にセット','肘を約75°に開き胸上部へ下ろす','ストレッチを感じたら弧を描いて押し上げ','トップで軽く近づけて絞る'],
+ tips:['45°以上だと肩の種目になる。30°がベスト','常に肩甲骨を寄せたまま','終了時はダンベルを太ももに戻してから座る']},
+'ショルダープレス':{t:'三角筋前・中部・三頭筋',sr:'3セット×10-12回',db:1,
+ steps:['背もたれ80-85°で座る','ダンベルを耳の横、肘90°に構える','手のひら正面のまま真上に押し上げ','トップで両手を近づける（ハの字→真上）','肘が肩より下がりすぎない位置まで戻す'],
+ tips:['腰を反らない（腹筋で体幹固定）','肘の下限は耳の高さ','首をすくめない（僧帽筋に逃げる）']},
+'サイドレイズ':{t:'三角筋中部',sr:'3セット×12-15回',db:1,
+ steps:['軽めのダンベルで肩幅に立つ','体を5-10°前傾、ダンベルは体の横','肘を軽く曲げたまま、水を注ぐように小指側を上に','肩の高さで1秒キープ','重力に任せず、ゆっくり下ろす'],
+ tips:['反動を使わない。5kgでも効く','肩をすくめない','肩より上は僧帽筋になる。上げすぎ注意','「肘を上げる」イメージで安定']},
+'トライセプスプッシュダウン':{t:'上腕三頭筋',sr:'3セット×12-15回',
+ steps:['プーリー最上段、バーorロープ装着','肘を体の横に固定し前腕だけで押し下げ','完全に伸ばし切る（ロープは左右に開く）','肘の位置を動かさずゆっくり戻す'],
+ tips:['肘が前後に動いたらフォーム崩壊','体を前に倒しすぎない','伸ばし切ると収縮が最大']},
+'アブローラー':{t:'腹直筋・体幹',sr:'3セット×8-12回',spine:1,mode:'bw',unit:'回',
+ steps:['膝コロでスタート','腹筋に力、背中を軽く丸める','体が一直線になるあたりまで転がす','腹筋の力で引き戻す（腕で引かない）'],
+ tips:['腰を反らすと腰痛の原因。骨盤後傾気味に','最初は浅く、徐々に伸ばす','立ちコロは上級者向け。膝コロで十分']},
+'バーベルスクワット':{t:'大腿四頭筋・大臀筋・ハム',sr:'4セット×6-8回',spine:1,
+ steps:['ハイバーで担ぐ（僧帽筋の上）','足幅肩幅〜やや広め、つま先30°外','胸を張り腹圧をかけて開始','お尻を引きながら膝を曲げ、膝はつま先方向へ','パラレルまで下ろす','かかとで地面を押して立つ'],
+ tips:['かかと浮き→プレートを敷くかリフティングシューズ','ニーイン厳禁','腹圧：大きく吸って360°膨らませ止める','WU：自重×10→バー×10→50%×5→70%×3','セーフティバー必須']},
+'レッグプレス':{t:'大腿四頭筋・大臀筋',sr:'3セット×10-12回',
+ steps:['深く座り背中をパッドに密着','足は中央〜やや下に肩幅','膝をゆっくり曲げ90°まで下ろす','かかとで押して戻す','ロックアウトせず95%伸展で止める'],
+ tips:['お尻が浮くほど深く下ろさない','足の位置：高め=ハム尻／低め=四頭筋','膝を伸ばし切ると関節に負担']},
+'レッグエクステンション':{t:'大腿四頭筋（単関節）',sr:'3セット×12-15回',
+ steps:['パッドを足首前面に合わせ背中密着','膝から先だけで脚を伸ばす','トップで1-2秒絞る','3秒かけて戻す'],
+ tips:['反動禁止。コントロールできる重量で','ネガティブをゆっくりやると効果倍増','膝に不安があれば可動域浅めに']},
+'ウォーキングランジ':{t:'四頭筋・大臀筋・バランス',sr:'3セット×10歩×2',
+ steps:['ダンベル携行or自重で立つ','大きく一歩、後ろ膝が床に触れる直前まで','前脚かかとで押して立ち、後ろ脚を前へ','交互に繰り返す（その場ランジでも可）'],
+ tips:['胸を張り上体まっすぐ','膝がつま先より大きく前に出ない','歩幅は大きめ（狭いと膝に負担）']},
+'カーフレイズ(立位)':{t:'腓腹筋',sr:'4セット×15-20回',
+ steps:['マシンに肩をセット、つま先をプレートの端に','かかとを下ろしストレッチ','限界まで上げてトップ2秒キープ','反動を使わずゆっくり下ろす'],
+ tips:['可動域を最大限使う','高回数＋ゆっくりが効く部位','つま先の向きで効く場所が変わる']},
+'懸垂':{t:'広背筋・二頭筋・僧帽筋下部',sr:'4セット×限界まで',
+ steps:['順手で肩幅より広く握る','肩甲骨を下げてデッドハングから','胸をバーに近づけるイメージで引き上げ','顎がバーを超えたら1秒キープ','腕が伸び切るまでゆっくり下ろす'],
+ tips:['できなければラットプルダウンで代替','バンド補助も有効','反動禁止','上げで肩甲骨を寄せ、下ろしで広げる']},
+'ダンベルロウ':{t:'広背筋・僧帽筋・菱形筋',sr:'3セット×10-12回(各腕)',db:1,
+ steps:['ベンチに片手片膝、背中は床と平行','反対の手でダンベル','腰の横へ引き上げ（肘を天井へ）','トップで肩甲骨を寄せ1秒','腕が伸び切るまで下ろす'],
+ tips:['体を回転させない','腕でなく肘を引き上げる意識','腰のポケットに向かって引く軌道']},
+'シーテッドケーブルロウ':{t:'広背筋・僧帽筋中部',sr:'3セット×10-12回',
+ steps:['Vバーorワイドバー装着で座る','膝を軽く曲げ上体わずかに前傾','肩甲骨を寄せながらみぞおちへ引く','肘が体の後ろを通過するまで','肩甲骨が開くのを感じるまで戻す'],
+ tips:['前後の反動を使わない','肩を下げたまま引く','Vバー=厚み／ワイドバー=広がり']},
+'フェイスプル':{t:'三角筋後部・外旋筋群',sr:'3セット×15-20回',
+ steps:['ケーブルを顔の高さ、ロープ装着','後ろに2-3歩下がる','肘を高く保ち顔に向かって引く','両手が耳の横、外旋ポーズ','ゆっくり戻す'],
+ tips:['肩の健康維持に超重要。軽め高回数','肘は常に肩の高さ以上','ダブルバイセップスのイメージで外旋','絶対に省略しない']},
+'バーベルカール':{t:'上腕二頭筋・前腕',sr:'3セット×10-12回',
+ steps:['EZバーorストレートバーを肩幅で握る','肘を体の横に固定し巻き上げ','トップで1秒絞る','3秒かけて完全に伸ばす'],
+ tips:['肘が動いたら重量オーバー','反動チーティング禁止','手首が痛むならEZバーへ']},
+'ハンギングレッグレイズ':{t:'腹直筋下部・腸腰筋',sr:'3セット×10-15回',mode:'bw',unit:'回',
+ steps:['バーにぶら下がる（肩幅）','揺れを止めてから膝を胸へ引き上げ','余裕があれば脚を伸ばして','骨盤が後傾するまで上げる','脚を振らずゆっくり下ろす'],
+ tips:['骨盤の後傾が重要','振れるなら膝曲げバージョン','握力が限界ならストラップ使用']},
+'ルーマニアンデッドリフト':{t:'ハムストリング・大臀筋',sr:'4セット×8-10回',spine:1,
+ steps:['肩幅で握り立つ','膝角度を固定したままお尻を後ろへ','バーは常に脚に沿わせて下ろす','ハムのストレッチ限界（膝下あたり）で止める','臀筋を絞って立ち上がる'],
+ tips:['背中を絶対に丸めない','膝固定の股関節ヒンジ動作','バーが体から離れると腰に負担','お尻で後ろの壁にタッチするイメージ']},
+'ブルガリアンスクワット':{t:'大臀筋・四頭筋',sr:'3セット×10回×各脚',db:1,
+ steps:['ベンチの前に立ち片足の甲を乗せる','前脚は大きく前へ','前膝を曲げ、後ろ膝が床に触れる直前まで','前脚かかとで押して立つ'],
+ tips:['バランスが取りにくいのが正常','前脚に体重の8割','上体まっすぐ（前傾すると四頭筋メイン）','最初は自重でフォーム習得']},
+'レッグカール':{t:'ハムストリング（単関節）',sr:'3セット×12-15回',
+ steps:['マシンにセット、パッドはアキレス腱の少し上','膝を曲げお尻の方へ引き寄せ','最大収縮で1秒キープ','伸び切る手前までゆっくり戻す'],
+ tips:['ライイングはお尻を浮かさない','つま先を背屈するとハムに効く','下ろし3秒でさらに効果的']},
+'ヒップスラスト':{t:'大臀筋・ハムストリング',sr:'3セット×10-12回',spine:1,
+ steps:['ベンチに肩甲骨を乗せバーを骨盤に（パッド必須）','膝90°、足は肩幅','かかとで押し骨盤を天井へ突き上げ','体一直線で臀筋を2秒強く絞る','床に着く前に次のレップ'],
+ tips:['腰を反らせすぎない。骨盤後傾で臀筋','顎を引きおへそを見る','トップで尻がカチカチなら正解']},
+'カーフレイズ(座位)':{t:'ヒラメ筋',sr:'4セット×15-20回',
+ steps:['シーテッドマシンで膝にパッド','かかとを限界まで下ろす','限界まで上げて2秒キープ','ゆっくり下ろしてストレッチ'],
+ tips:['座位は膝曲げ=ヒラメ筋に効く','立位と両方でふくらはぎ全体をカバー','20回余裕なら重量追加']},
+'ダンベルフライ':{t:'大胸筋（ストレッチ種目）',sr:'3セット×10-12回',db:1,
+ steps:['ベンチに仰向け、ダンベルを胸の真上に構える','肘を軽く曲げてその角度で固定','弧を描いて真横にゆっくり開く','胸のストレッチを最大に感じる位置まで下ろす','同じ軌道で閉じ、閉じ切る手前で止める'],
+ tips:['重量より可動域とストレッチ優先','肘の角度は終始変えない','閉じ切るとテンションが抜ける。8割で折り返す','プレス系の後にやるのが定石']},
+'ケーブルクロスオーバー':{t:'大胸筋（収縮種目）',sr:'3セット×12-15回',
+ steps:['プーリーを上段にセットし中央に立つ','軽く前傾し、肘を軽く曲げて固定','弧を描いて斜め下前方へ引き寄せる','両手が触れる位置で1-2秒強く絞る','ゆっくり開いて戻す'],
+ tips:['胸の内側と輪郭を作る仕上げ種目','反動を使ったら重量オーバー','大会前の絞り込み期に特に有効','ケーブルがなければダンベルフライを1セット追加']},
+'ラットプルダウン':{t:'広背筋',sr:'3セット×10-12回',
+ steps:['肩幅より広め・順手でバーを握る','胸を張り、上体をわずかに後傾','肘を骨盤に向かって引き下ろす','バーを鎖骨の上部へ','肩甲骨が開くのを感じるまでゆっくり戻す'],
+ tips:['腕でなく肘で引く','体を振って反動を使わない','懸垂ができない日の代替にも最適','引き切りで1秒止めると効きが変わる']},
+'リアデルトフライ':{t:'三角筋後部',sr:'3セット×15-20回',db:1,
+ steps:['上体を床と平行近くまで前傾（またはインクラインベンチにうつ伏せ）','肘を軽く曲げてダンベルを保持','真横に開いて肩の高さまで上げる','トップで1秒キープ','重力に任せずゆっくり下ろす'],
+ tips:['軽め高回数が正解。反動禁止','肩をすくめると僧帽筋に逃げる','審査員から見える後ろ姿の立体感はここで決まる']},
+'ハンマーカール':{t:'上腕筋・前腕',sr:'3セット×10-12回',db:1,
+ steps:['ダンベルを縦持ち（親指が上）で立つ','肘を体の横に固定','手首の向きを変えずに巻き上げる','トップで1秒絞り、ゆっくり下ろす'],
+ tips:['腕の「厚み」を作る種目','バーベルカールの後に行う','手首を返さない・反動を使わない']},
+'スカルクラッシャー':{t:'上腕三頭筋（長頭）',sr:'3セット×10-12回',
+ steps:['ベンチに仰向け、EZバーを額の真上に構える','肘の位置を天井に向けて固定','額〜頭の後ろへゆっくり下ろす','三頭筋の力だけで押し戻す'],
+ tips:['肘が開くと効きが逃げる','重量を欲張ると肘を痛める。丁寧に','プッシュダウンより先にやると高重量が扱える']},
+'インクラインウォーク':{t:'心肺・脂肪燃焼',sr:'30分',mode:'cardio',
+ steps:['傾斜10-12%に設定','速度5.5-6.5km/h（早歩きで息が弾む）','手すりを掴まず腕を振る','最後の5分は傾斜を下げてクールダウン'],
+ tips:['手すりを掴むと消費カロリー激減','心拍120-135が脂肪燃焼ゾーン','同じ勾配・時速で心拍の余裕を比較すると成長が分かる']},
+'プランク':{t:'腹横筋・体幹',sr:'3セット×45-60秒',mode:'bw',unit:'秒',
+ steps:['前腕とつま先で支える','肘は肩の真下','頭からかかとまで一直線','腹筋を締めたまま呼吸してキープ'],
+ tips:['お尻の上げすぎ下げすぎNG','キープできなくなったら止める','60秒が楽になったら片脚・腕伸ばしへ']},
+'サイドプランク':{t:'腹斜筋・中臀筋',sr:'3セット×30秒×各側',mode:'bw',unit:'秒',
+ steps:['横向きで肘を肩の真下に','腰を持ち上げ一直線','骨盤を固定してキープ'],
+ tips:['腰が落ちたらフォーム崩壊','左右差があれば弱い側を先に','膝つきバージョンで負荷調整も可']},
+'バイシクルクランチ':{t:'腹直筋・腹斜筋',sr:'3セット×20回',mode:'bw',unit:'回',
+ steps:['仰向け、手は頭の後ろに添える','右膝と左肘を近づけツイスト','交互に自転車を漕ぐように'],
+ tips:['首を引っ張らない','速いほど効果が下がる。ゆっくり丁寧に','伸ばした脚は低く保つ']},
+'デッドバグ':{t:'腹横筋（腰痛予防）',sr:'3セット×10回×各側',mode:'bw',unit:'回',
+ steps:['仰向けで両手を天井、膝90°','腰を床に押し付ける','右腕と左脚を同時にゆっくり伸ばす','床に触れる手前で戻し、反対側'],
+ tips:['腰が浮いたらアウト','伸ばすとき息を吐く','簡単なら5秒かけて伸ばす']},
+};
+
+/* ================= 状態 ================= */
+function load(){try{return JSON.parse(localStorage.getItem(LS))}catch(e){return null}}
+let S=load()||{profile:Object.assign({},DEF_PROFILE),days:{},custom:[]};
+if(!S.profile)S.profile=Object.assign({},DEF_PROFILE);
+if(!S.days)S.days={}; if(!S.custom)S.custom=[]; if(!S.sets)S.sets=[]; if(!S.rest)S.rest={};
+/* Day 0 シード */
+(function(){const sd=S.profile.startDate;
+ if(!S.days[sd])S.days[sd]={meals:[],cardio:[]};
+ if(S.days[sd].weight==null){S.days[sd].weight=S.profile.startWeight;S.days[sd].bf=S.profile.startBF;}
+})();
+function save(){localStorage.setItem(LS,JSON.stringify(S));}
+function saveR(){save();render();}
+
+function fmt(d){const y=d.getFullYear(),m=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);return y+'-'+m+'-'+dd;}
+const WD=['日','月','火','水','木','金','土'];
+function fmtShort(ds){const d=new Date(ds+'T00:00:00');return (d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')';}
+let curDate=fmt(new Date());
+let tab='home', foodCat='conv', foodQ='', mealSel=null, exSel='';
+let photosCache=null, db=null;
+
+function D(d){if(!S.days[d])S.days[d]={meals:[],cardio:[]};const o=S.days[d];
+ if(!o.meals)o.meals=[];if(!o.cardio)o.cardio=[];return o;}
+
+function shiftDate(n){const d=new Date(curDate+'T00:00:00');d.setDate(d.getDate()+n);curDate=fmt(d);render();}
+function goToday(){curDate=fmt(new Date());render();}
+
+/* ================= 計算 ================= */
+function dayTotals(ds){const o=S.days[ds]||{};let k=0,p=0,f=0,c=0,sw=0;
+ (o.meals||[]).forEach(m=>{k+=m.k*m.q;p+=m.p*m.q;f+=m.f*m.q;c+=m.c*m.q;if(m.sw)sw+=m.k*m.q;});
+ return {k:Math.round(k),p:Math.round(p),f:Math.round(f),c:Math.round(c),sw:Math.round(sw)};}
+function latestWeight(upto){const ds=Object.keys(S.days).filter(d=>d<=upto&&S.days[d].weight!=null).sort();
+ return ds.length?{d:ds[ds.length-1],w:S.days[ds[ds.length-1]].weight}:null;}
+function goalLineAt(ds){const P=S.profile;const t0=+new Date(P.startDate),t1=+new Date(P.goalDate),t=+new Date(ds);
+ if(t1<=t0)return P.goalWeight;const r=Math.min(1,Math.max(0,(t-t0)/(t1-t0)));
+ return P.startWeight+(P.goalWeight-P.startWeight)*r;}
+function daysLeft(){return Math.max(0,Math.round((+new Date(S.profile.goalDate)-+new Date(fmt(new Date())))/86400000));}
+function allFoods(){return FOODS.concat(S.custom.map(m=>Object.assign({cat:'my'},m)));}
+function streak(){let n=0;const d=new Date(curDate+'T00:00:00');
+ for(;;){const ds=fmt(d);const o=S.days[ds];
+  const has=o&&(o.weight!=null||o.water||(o.meals&&o.meals.length)||(o.wk&&Object.keys(o.wk.logs||{}).length));
+  if(has){n++;d.setDate(d.getDate()-1);}else break; if(n>999)break;}
+ return n;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function ma7(pts){return pts.map(function(p){const t=p[0];
+ const win=pts.filter(function(q){return q[0]<=t&&q[0]>=t-6*86400000;});
+ return [t,win.reduce(function(a,b){return a+b[1];},0)/win.length];});}
+function weightAt(ds){const lw=latestWeight(ds);return lw?lw.w:null;}
+function firstVal(key){const ds=Object.keys(S.days).filter(function(d){return S.days[d][key]!=null;}).sort();
+ return ds.length?S.days[ds[0]][key]:null;}
+
+/* ================= チャート ================= */
+function lineChart(series,h){h=h||150;const w=340,pl=36,pr=10,pt=10,pb=20;
+ let xs=[],ys=[];series.forEach(s=>s.pts.forEach(p=>{xs.push(p[0]);ys.push(p[1]);}));
+ if(!xs.length)return '<div class="muted small" style="padding:12px 0">まだデータがありません</div>';
+ let x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs),y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
+ if(x1===x0)x1=x0+86400000;const ypad=(y1-y0)*0.12||1;y0-=ypad;y1+=ypad;
+ const X=v=>pl+(v-x0)/(x1-x0)*(w-pl-pr),Y=v=>pt+(1-(v-y0)/(y1-y0))*(h-pt-pb);
+ let g='';for(let i=0;i<=3;i++){const yy=pt+i*(h-pt-pb)/3;const yv=y1-(y1-y0)*i/3;
+  g+='<line x1="'+pl+'" y1="'+yy+'" x2="'+(w-pr)+'" y2="'+yy+'" stroke="#26242B" stroke-width="1"/>'+
+     '<text x="'+(pl-5)+'" y="'+(yy+4)+'" fill="#8E897B" font-size="10" text-anchor="end">'+yv.toFixed(1)+'</text>';}
+ const paths=series.map(s=>{
+  const d=s.pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+  const dots=s.dots?s.pts.map(p=>'<circle cx="'+X(p[0]).toFixed(1)+'" cy="'+Y(p[1]).toFixed(1)+'" r="2.6" fill="'+s.color+'"/>').join(''):'';
+  return '<path d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.2" '+(s.dash?'stroke-dasharray="5 5" opacity=".8"':'')+'/>'+dots;
+ }).join('');
+ const d0=new Date(x0),d1=new Date(x1);
+ const lab='<text x="'+pl+'" y="'+(h-4)+'" fill="#8E897B" font-size="10">'+(d0.getMonth()+1)+'/'+d0.getDate()+'</text>'+
+  '<text x="'+(w-pr)+'" y="'+(h-4)+'" fill="#8E897B" font-size="10" text-anchor="end">'+(d1.getMonth()+1)+'/'+d1.getDate()+'</text>';
+ return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto">'+g+paths+lab+'</svg>';}
+
+function judge(val,goal){const r=goal>0?val/goal:0;
+ if(r<0.7)return '<span class="judge" style="background:#26242B;color:#8E897B">不足</span>';
+ if(r<=1.1)return '<span class="judge" style="background:rgba(155,196,127,.13);color:#9BC47F">いい感じ</span>';
+ return '<span class="judge" style="background:rgba(217,104,90,.15);color:#D9685A">とりすぎ</span>';}
+function judgeInv(val,goal){const r=goal>0?val/goal:0;
+ if(r<=1)return '<span class="judge" style="background:rgba(155,196,127,.13);color:#9BC47F">ケト圏内</span>';
+ if(r<=1.5)return '<span class="judge" style="background:rgba(217,104,90,.15);color:#D9685A">注意</span>';
+ return '<span class="judge" style="background:rgba(217,104,90,.15);color:#D9685A">ケト外れ</span>';}
+function nrow(label,val,goal,color,unit,inv){
+ const pct=Math.min(100,goal>0?val/goal*100:0);
+ return '<div class="nrow"><span class="nlabel">'+label+'</span>'+
+  '<div class="nbar"><i style="width:'+pct+'%;background:'+color+'"></i></div>'+
+  '<span class="nval">'+Math.round(val)+'<span style="font-weight:400">/'+goal+(unit||'')+'</span></span>'+(inv?judgeInv(val,goal):judge(val,goal))+'</div>';}
+function coachMsg(o,t,P){
+ const hr=new Date().getHours();const isToday=curDate===fmt(new Date());
+ const pLeft=P.p-t.p;
+ if(o.weight==null)return 'まずは今朝の体重を入力しよう！毎朝起きてすぐ・同じ条件で測るのがコツだ⚖️';
+ const ydds=(function(){const d=new Date(curDate+'T00:00:00');d.setDate(d.getDate()-1);return fmt(d);})();
+ const evT=o.event,evY=(S.days[ydds]&&S.days[ydds].event)||drankOn(ydds);
+ if(evY)return '昨日は'+((S.days[ydds]&&S.days[ydds].event)?'会食':'酒あり')+'。今朝の体重が+1kg前後でも、それはほぼ水分とグリコーゲンだ。脂肪じゃない。今日の任務：①水3L ②タンパク質優先で普通に食べる（絶食は逆効果）③できれば有酸素30分。2〜3日で数字は戻る🔥';
+ if(evT)return '今夜は会食だ（枠'+evT.kcal.toLocaleString()+'kcal確保済み）。昼は肉と卵をしっかり食べて、飢えた状態で店に行くな。酒は蒸留酒（ハイボール・焼酎）だけ、ビール・日本酒・甘いサワーは断る。締めと衣・タレ・芋も回避して、肉と刺身で堂々と楽しんでこい🍺';
+ if(t.k>P.kcal)return 'カロリーが'+(t.k-P.kcal)+'kcalオーバー…！夜は軽めにして、明日インクラインウォーク30分でリカバリーしましょう🏃';
+ if(t.c>P.c)return '糖質が'+Math.round(t.c-P.c)+'gオーバー…！ケト中は糖質'+P.c+'g以下が生命線だ。今日はこれ以上糖質ゼロで通して、肉・卵・チーズで満腹を作れ🥩';
+ if(t.sw>P.sweets)return 'スイーツ枠を'+(t.sw-P.sweets)+'kcal超えました🍰 今日はここでストップ！明日は枠内で楽しみましょう';
+ const lwc=latestWeight(curDate);const wNow=lwc?lwc.w:P.startWeight;
+ const sugg=Math.round((wNow*26-500)/50)*50;
+ if(P.kcal-sugg>=100)return '体重が落ちて維持カロリーも下がってきたぞ。摂取目標を'+P.kcal.toLocaleString()+'→'+sugg.toLocaleString()+'kcalに締め直そう。<br><a class="glink" onclick="applyKcal('+sugg+')">→ ワンタップで更新する</a>';
+ const d14=new Date(curDate+'T00:00:00');d14.setDate(d14.getDate()-14);const lw14=latestWeight(fmt(d14));
+ const nEntries=Object.keys(S.days).filter(function(dd){return S.days[dd].weight!=null;}).length;
+ if(nEntries>=10&&lw14&&Math.abs(wNow-lw14.w)<0.3&&wNow>P.goalWeight+0.5)return 'この2週間、体重が止まっているな。停滞は体が慣れた証拠で、必ず抜ける。睡眠と水分を整えて、次の面談でリフィードか−100kcalを相談しよう🔥';
+ if(isToday&&hr>=18&&pLeft>40)return 'たんぱく質があと'+Math.round(pLeft)+'g足りません！夕食に鶏むね＋プロテインで巻き返しましょう💪';
+ if(isToday&&hr>=15&&(o.water||0)<P.water/2)return '水分がまだ'+((o.water||0)/1000).toFixed(1)+'Lです。こまめに「+250ml」を押していきましょう💧';
+ if(pLeft<=0)return 'たんぱく質'+P.p+'gクリア！すばらしい！この積み重ねがステージへの最短ルートだ🔥';
+ const mk=menuForDate(curDate);
+ if(mk){const done=o.wk&&o.wk.logs&&Object.keys(o.wk.logs).length;
+  return done?'今日の'+MENUS[mk].name+'、お疲れ！あとは食事とタンパク質で回復だ。明日も来いよ💪'
+   :'今日は'+MENUS[mk].name+'の日だ。前回の自分を1回でも、1.25kgでも超えていくぞ🔥';}
+ return '今日は休養日。回復も筋トレのうちだ。タンパク質と睡眠をしっかり整えよう💪';}
+
+/* ================= ホーム ================= */
+function homeTab(){
+ const P=S.profile,o=D(curDate),t=dayTotals(curDate);
+ const lw=latestWeight(curDate);const w=lw?lw.w:P.startWeight;
+ const line=goalLineAt(curDate);const diff=w-line;
+ const remain=(w-P.goalWeight);
+ const menuKey=(o.wk&&o.wk.menu)||menuForDate(curDate);
+ const wkDone=o.wk&&o.wk.logs&&Object.keys(o.wk.logs).some(k=>(o.wk.logs[k]||[]).some(s=>s.r||s.w||s.min));
+ const wEntries=Object.keys(S.days).filter(d=>S.days[d].weight!=null).sort().map(d=>[+new Date(d),S.days[d].weight]);
+ const gl=[[+new Date(P.startDate),P.startWeight],[+new Date(P.goalDate),P.goalWeight]];
+ const st=streak();
+ const dayN=Math.max(1,Math.round((+new Date(curDate)-+new Date(P.startDate))/86400000)+1);
+ const d7=new Date(curDate+'T00:00:00');d7.setDate(d7.getDate()-7);
+ const lw7=latestWeight(fmt(d7));const wk7=lw7?w-lw7.w:0;
+ const kcalLeft=Math.max(0,P.kcal-t.k);
+ const needBk=!S.lastExport||(Date.now()-S.lastExport)>7*86400000;
+ let ydRow='';
+ (function(){const todayStr=fmt(new Date());if(curDate!==todayStr)return;
+  const yd=new Date();yd.setDate(yd.getDate()-1);const yds=fmt(yd);
+  if(yds<P.startDate)return;const yo=S.days[yds];
+  if(yo&&(yo.weight!=null||yo.wSkip))return;
+  ydRow='<div class="card" style="padding:10px 14px;margin-bottom:10px"><div class="row between">'+
+   '<span class="small">昨日('+fmtShort(yds)+')の体重が未入力</span>'+
+   '<span class="row" style="gap:5px"><input type="number" step="0.1" inputmode="decimal" id="ydw" placeholder="--.-" style="width:66px;padding:6px">'+
+   '<button class="mini" onclick="fillYesterday(\''+yds+'\')">保存</button>'+
+   '<button class="delx" onclick="skipYesterday(\''+yds+'\')">✕</button></span></div></div>';})();
+ return ''+
+ (needBk?'<div class="card" style="padding:10px 14px;margin-bottom:10px;border-color:var(--accent2)"><div class="row between">'+
+  '<span class="small">☁ '+(S.lastExport?'最終バックアップから'+Math.floor((Date.now()-S.lastExport)/86400000)+'日':'バックアップがまだ一度もありません')+'</span>'+
+  '<button class="mini" onclick="shareJson()">1タップ保存</button></div></div>':'')+
+ ydRow+
+ '<div style="text-align:center;padding:4px 0 0">'+
+   '<div class="row" style="justify-content:center;gap:8px">'+
+     '<span class="pill gold">DAY '+dayN+'</span>'+
+     (st>1?'<span class="pill dim">🔥 '+st+'日連続</span>':'')+
+   '</div>'+
+   '<div class="hero" style="margin-top:4px"><input type="number" step="0.1" inputmode="decimal" placeholder="--.-" value="'+(o.weight!=null?o.weight:'')+'" onchange="setVal(\'weight\',this.value)"><span class="kg">kg</span></div>'+
+   '<div class="row" style="justify-content:center;gap:6px;flex-wrap:wrap">'+
+     (lw7?'<span class="pill dim">'+(wk7<=0?'▼':'▲')+' 週'+(wk7>0?'+':'')+wk7.toFixed(1)+'kg</span>':'')+
+     '<span class="pill dim">目標まで'+(remain>0?'−':'+')+Math.abs(remain).toFixed(1)+'kg</span>'+
+     '<span class="pill '+(diff<=0.2?'ok':'bad')+'">'+(diff<-0.2?'ライン先行 '+Math.abs(diff).toFixed(1):(diff<=0.2?'ライン上 ✓':'ライン遅れ +'+diff.toFixed(1)))+'</span>'+
+     '<span class="pill dim">大会まで'+daysLeft()+'日</span>'+
+   '</div>'+
+   '<div style="margin:8px -4px 0">'+lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:ma7(wEntries),color:'#8A5643'},{pts:wEntries,color:'#F0865A',dots:1}],150)+'</div>'+
+ '</div>'+
+ '<div class="grid2" style="margin-top:10px;margin-bottom:12px">'+
+   '<div class="tile"><div class="tl">体脂肪率</div><div class="row" style="justify-content:center"><input class="tin" type="number" step="0.1" inputmode="decimal" placeholder="--.-" value="'+(o.bf!=null?o.bf:'')+'" onchange="setVal(\'bf\',this.value)"><span class="tu">%</span></div>'+
+     '<div class="ts" style="text-align:center">開始から '+(o.bf!=null?((o.bf-P.startBF<=0?'':'+')+(o.bf-P.startBF).toFixed(1)+'pt'):'未計測')+'</div></div>'+
+   (function(){const fw=firstVal('waist');return '<div class="tile"><div class="tl">ウエスト</div><div class="row" style="justify-content:center"><input class="tin" type="number" step="0.1" inputmode="decimal" placeholder="--.-" value="'+(o.waist!=null?o.waist:'')+'" onchange="setVal(\'waist\',this.value)"><span class="tu">cm</span></div>'+
+     '<div class="ts" style="text-align:center">'+(o.waist!=null&&fw!=null?(o.waist-fw<=0?'開始から':'開始から+')+(o.waist-fw).toFixed(1)+'cm':'週1回おへそ周り')+'</div></div>';})()+
+   '<div class="tile"><div class="tl">睡眠</div><div class="row" style="justify-content:center"><input class="tin" type="number" step="0.1" inputmode="decimal" placeholder="-.-" value="'+(o.sleep!=null?o.sleep:'')+'" onchange="setVal(\'sleep\',this.value)"><span class="tu">h</span></div>'+
+     '<div class="ts" style="text-align:center">目標 '+P.sleep+'h以上（Watchの値）</div></div>'+
+   '<div class="tile"><div class="tl">水分</div><div class="row between"><span class="tv">'+((o.water||0)/1000).toFixed(2)+'<span class="tu">/'+(P.water/1000)+'L</span></span>'+
+     '<span class="row" style="gap:4px"><button class="stepbtn" onclick="addWater(-250)">−</button><button class="stepbtn gold" onclick="addWater(250)">＋</button></span></div>'+
+     '<div class="bar blue" style="margin-top:8px;height:6px"><i style="width:'+Math.min(100,(o.water||0)/P.water*100)+'%"></i></div>'+
+     '<div class="ts">+250mlずつ</div></div>'+
+   '<div class="tile" onclick="go(\'food\')"><div class="tl">残りカロリー</div><div class="tv">'+kcalLeft.toLocaleString()+'</div>'+
+     '<div class="ts">P'+Math.max(0,Math.round(P.p-t.p))+' / F'+Math.max(0,Math.round(P.f-t.f))+' / C'+Math.max(0,Math.round(P.c-t.c))+' 残り</div></div>'+
+ '</div>'+
+ '<div class="card" onclick="go(\'food\')"><h3>今日の栄養　<span class="muted xs">タップで食事入力へ</span></h3>'+
+   '<div class="row between"><span class="num" style="font-size:26px">'+t.k.toLocaleString()+'<span class="small muted">/'+P.kcal.toLocaleString()+'kcal</span></span>'+
+   '<span class="xs" style="color:var(--accent);font-weight:800">残り'+Math.max(0,P.kcal-t.k).toLocaleString()+'kcal</span></div>'+
+   '<div class="bar" style="margin:6px 0 4px"><i style="width:'+Math.min(100,t.k/P.kcal*100)+'%"></i></div>'+
+   nrow('たんぱく質',t.p,P.p,'var(--p)','g')+nrow('脂質',t.f,P.f,'var(--f)','g')+nrow('糖質',t.c,P.c,'var(--c)','g',1)+
+   '<div class="row between" style="margin-top:10px"><span class="xs muted">スイーツ枠 '+t.sw+'/'+P.sweets+'kcal</span><span class="xs '+(t.sw>P.sweets?'':'muted')+'" style="'+(t.sw>P.sweets?'color:var(--bad);font-weight:700':'')+'">'+(t.sw>P.sweets?'オーバー！':'OK')+'</span></div>'+
+   '<div class="bar sweet" style="margin-top:4px"><i style="width:'+Math.min(100,t.sw/P.sweets*100)+'%"></i></div>'+
+ '</div>'+
+ '<div class="card"><div class="coach"><div class="cavatar">✳&#xFE0E;</div><div class="cbubble">'+coachMsg(o,t,P)+
+   '<div style="margin-top:6px"><a class="glink" onclick="weeklyReview()">週次面談レポートをコピー →</a>　<a class="glink" onclick="editMission()">ミッション編集 →</a>　<a class="glink" onclick="openEventModal()">🍺会食予定 →</a></div></div></div></div>'+
+ (o.event?'<div class="card" style="border-color:var(--accent2)">'+
+   '<h3 style="color:var(--accent)">🍺 今夜は会食（枠'+o.event.kcal.toLocaleString()+'kcal確保済み）</h3>'+
+   '<div class="small" style="line-height:1.8">①昼は肉・卵をしっかり（飢えて店に行かない）<br>②酒は蒸留酒のみ3杯まで＋1杯ごとに炭酸水<br>③締め・衣物・タレ物・芋を回避</div>'+
+   '<div class="xs muted" style="margin-top:6px">会食以外の食事の目安：'+Math.max(0,P.kcal-o.event.kcal).toLocaleString()+'kcal ・ <span class="glink" onclick="openEventModal()">変更/解除</span></div></div>':'')+
+ ((function(){const td=relDate(1);const tm=S.days[td]&&S.days[td].event;
+   return (tm&&curDate===fmt(new Date()))?'<div class="xs muted" style="text-align:center;margin-bottom:10px">📅 明日は会食予定（枠'+tm.kcal.toLocaleString()+'kcal）— 前日はいつも通りでOK</div>':'';})())+
+ (S.mission&&S.mission.text?'<div class="card" style="border-color:var(--accent2)" onclick="editMission()">'+
+   '<h3 style="color:var(--accent)">⚡ 今週のミッション</h3>'+
+   '<div style="font-weight:700;line-height:1.7">'+esc(S.mission.text)+'</div>'+
+   '<div class="xs muted" style="margin-top:5px">'+fmtShort(S.mission.setAt)+' 設定・タップで編集</div></div>':'')+
+ '<button class="btn wk" onclick="go(\'train\')"><span style="letter-spacing:2px">TODAY\'S WORKOUT</span>'+
+   '<span class="xs" style="font-weight:800">'+(menuKey?MENUS[menuKey].name+(wkDone?' ✓':''):'休養日')+'　→</span></button>'+
+ '<div class="card"><h3>有酸素・運動</h3>'+
+   (o.cardio.length?o.cardio.map((cd,i)=>'<div class="fooditem"><span>'+cd.type+'　<b class="num">'+cd.min+'分</b>　<span class="xs" style="color:var(--accent)">約'+cardioKcal(cd.type,cd.min)+'kcal消費</span></span><button class="delx" onclick="delCardio('+i+')">✕</button></div>').join(''):'<div class="muted small">記録なし</div>')+
+   '<div class="row" style="margin-top:8px"><select id="cdtype"><option>インクラインウォーク</option><option>ランニング</option><option>バイク</option><option>ウォーキング</option><option>水泳</option><option>その他</option></select>'+
+   '<input type="number" id="cdmin" placeholder="分" inputmode="numeric" style="width:64px"><button class="mini" onclick="addCardio()">追加</button></div>'+
+   '<div class="xs muted" style="margin-top:8px">消費kcalは参考値（実測より多く出がち）。食べていい量には足さない設計です。運動は赤字の深掘りと筋肉維持のため💪</div>'+
+ '</div>';
+}
+
+window.setVal=function(k,v){const o=D(curDate);const n=parseFloat(v);o[k]=isNaN(n)?null:n;saveR();};
+window.addWater=function(ml){const o=D(curDate);o.water=Math.max(0,(o.water||0)+ml);saveR();};
+window.fillYesterday=function(ds){const v=parseFloat(document.getElementById('ydw').value);
+ if(isNaN(v)){toast('数値を入力してください');return;}
+ D(ds).weight=v;saveR();toast('✓ 昨日の体重を記録しました');};
+window.skipYesterday=function(ds){D(ds).wSkip=1;saveR();};
+
+/* ===== 会食・飲酒モード ===== */
+function drankOn(ds){const o=S.days[ds];if(!o||!o.meals)return false;
+ return o.meals.some(function(m){return /ビール|ハイボール|日本酒|焼酎|ワイン|チューハイ|レモンサワー|梅酒|カクテル|酒/.test(m.n);});}
+function relDate(off){const d=new Date();d.setDate(d.getDate()+off);return fmt(d);}
+window.openEventModal=function(){
+ function row(off,label){const ds=relDate(off);const ev=S.days[ds]&&S.days[ds].event;
+  return '<div style="margin-bottom:14px"><div class="small" style="font-weight:800;margin-bottom:6px">'+label+'（'+fmtShort(ds)+'）</div>'+
+   (ev?'<div class="row between"><span class="pill gold">登録済み・枠'+ev.kcal.toLocaleString()+'kcal</span>'+
+    '<button class="mini" onclick="clearEvent(\''+ds+'\')">解除</button></div>'
+   :'<div class="row" style="gap:6px">'+
+    '<button class="ghost" style="flex:1" onclick="setEvent('+off+',600)">軽め<br><span class="xs muted">600kcal</span></button>'+
+    '<button class="ghost" style="flex:1" onclick="setEvent('+off+',1000)">普通<br><span class="xs muted">1,000kcal</span></button>'+
+    '<button class="ghost" style="flex:1" onclick="setEvent('+off+',1500)">がっつり<br><span class="xs muted">1,500kcal</span></button></div>')+'</div>';}
+ openModal('<h3>🍺 会食・飲み会の予定</h3>'+
+  '<div class="xs muted" style="margin-bottom:12px">先に登録すると「計画されたイベント」になります。当日は日中の食べ方ガイド＋叱責オフ、翌朝は自動でリカバリー支援に切り替わります。</div>'+
+  row(0,'今日の夜')+row(1,'明日の夜')+
+  '<div class="xs muted">会食の鉄則：①昼は肉・卵をしっかり ②酒は蒸留酒のみ3杯まで ③締め・衣物・タレ物・芋を回避</div>');};
+window.setEvent=function(off,k){const ds=relDate(off);D(ds).event={kcal:k};
+ save();closeModal();render();toast('✓ '+(off?'明日':'今日')+'の会食を登録（枠'+k.toLocaleString()+'kcal）');};
+window.clearEvent=function(ds){delete D(ds).event;save();closeModal();render();toast('会食予定を解除しました');};
+window.addCardio=function(){const t=document.getElementById('cdtype').value,m=parseInt(document.getElementById('cdmin').value);
+ if(!m){toast('分数を入力してください');return;}D(curDate).cardio.push({type:t,min:m});saveR();};
+const METS={'インクラインウォーク':6,'ランニング':9.8,'バイク':7,'ウォーキング':3.5,'水泳':8,'その他':5};
+function cardioKcal(type,min,ds){const lw=latestWeight(ds||curDate);const w=lw?lw.w:S.profile.startWeight;
+ return Math.round((METS[type]||5)*1.05*w*min/60);}
+window.delCardio=function(i){D(curDate).cardio.splice(i,1);saveR();};
+
+/* ================= 食事 ================= */
+const MEAL_NAMES=['朝','昼','夜','間食'];
+function foodTab(){
+ const o=D(curDate),t=dayTotals(curDate),P=S.profile;
+ const groups=MEAL_NAMES.map(mn=>{
+  const items=o.meals.map((m,i)=>({m:m,i:i})).filter(x=>x.m.meal===mn);
+  if(!items.length)return '';
+  return '<div class="mealgrp"><div class="row between"><div class="small" style="font-weight:800;color:var(--accent)">'+mn+'</div>'+
+   '<button class="delx" style="font-size:11px" onclick="saveSet(\''+mn+'\')">⚡ セット保存</button></div>'+
+   items.map(x=>'<div class="fooditem"><div><div style="font-size:14px;font-weight:600">'+(x.m.sw?'🍰 ':'')+x.m.n+'</div>'+
+    '<div class="xs muted">'+Math.round(x.m.k*x.m.q)+'kcal　P'+Math.round(x.m.p*x.m.q)+' F'+Math.round(x.m.f*x.m.q)+' C'+Math.round(x.m.c*x.m.q)+'</div></div>'+
+    '<div class="qty"><button onclick="chgQty('+x.i+',-0.5)">−</button><span style="font-size:13px;font-weight:700">'+x.m.q+'</span><button onclick="chgQty('+x.i+',0.5)">＋</button>'+
+    '<button class="delx" onclick="delMeal('+x.i+')">✕</button></div></div>').join('')+'</div>';
+ }).join('');
+ return ''+
+ '<div class="card"><h3>'+fmtShort(curDate)+' の食事</h3>'+
+  '<div class="row" style="gap:10px;flex-wrap:wrap;font-size:13px;font-weight:700">'+
+   '<span>'+t.k+'<span class="muted xs">/'+P.kcal+'kcal</span></span>'+
+   '<span style="color:var(--p)">P'+t.p+'<span class="muted xs">/'+P.p+'</span></span>'+
+   '<span style="color:var(--f)">F'+t.f+'<span class="muted xs">/'+P.f+'</span></span>'+
+   '<span style="color:var(--c)">C'+t.c+'<span class="muted xs">/'+P.c+'</span></span></div>'+
+  '<div class="bar" style="margin-top:8px"><i style="width:'+Math.min(100,t.k/P.kcal*100)+'%"></i></div>'+
+  (S.sets.length?'<div class="chips" style="margin-top:10px">'+S.sets.map((stt,i)=>
+   '<span class="chip" onclick="applySet('+i+')">⚡ '+esc(stt.name)+
+   '<span style="margin-left:7px;color:var(--muted)" onclick="event.stopPropagation();delSetMeal('+i+')">✕</span></span>').join('')+'</div>':'')+
+  (groups||'<div class="muted small" style="margin-top:10px">まだ記録がありません</div>')+
+  '<div class="row" style="margin-top:12px;gap:8px">'+
+   '<button class="btn" style="flex:2" onclick="openFoodModal()">＋ 食品を追加</button>'+
+   '<button class="ghost" style="flex:1" onclick="copyYesterday()">昨日コピー</button></div>'+
+  '<button class="ghost" style="width:100%;margin-top:8px" onclick="openMyFood()">マイ食品の登録・編集</button>'+
+ '</div>'+
+ '<div class="card"><h3>残り計算</h3><div class="small">'+
+  'あと <b style="color:var(--accent)">'+Math.max(0,P.kcal-t.k)+'kcal</b> ／ タンパク質はあと <b style="color:var(--p)">'+Math.max(0,P.p-t.p)+'g</b>'+
+  (P.p-t.p>40?'<div class="xs muted" style="margin-top:4px">→ プロテイン1杯(P22)＋サラダチキン(P24)で約46g稼げます</div>':'')+
+ '</div></div>'+
+ '<div class="card"><h3>🥑 ケトジェニックの鉄則</h3><div class="small" style="line-height:1.9">'+
+ '① 糖質は1日'+P.c+'g以下（米・パン・麺・芋・砂糖は全カット）<br>'+
+ '② 脂質を恐れない — 卵・肉・魚・チーズ・アボカド・MCTオイルでカロリーを作る<br>'+
+ '③ 塩分と水分を多めに（導入期のだるさ「ケトフルー」は塩と水でほぼ防げる）<br>'+
+ '④ 体が切り替わるまで約2週間。中途半端な糖質が一番もったいない<br>'+
+ '⑤ 外食は焼肉（タレ→塩）・焼き鳥（塩）・ステーキ・刺身が安全</div></div>';
+}
+function guessMeal(){const h=new Date().getHours();return h<10?'朝':h<15?'昼':h<21?'夜':'間食';}
+window.openFoodModal=function(){if(!mealSel)mealSel=guessMeal();renderFoodModal();};
+function renderFoodModal(){
+ const list=allFoods().filter(f=>(foodCat==='all'||f.cat===foodCat)&&(!foodQ||f.n.indexOf(foodQ)>=0));
+ openModal('<h3>食品を追加　<span class="xs muted">'+fmtShort(curDate)+'</span></h3>'+
+  '<div class="chips" style="margin-bottom:8px">'+MEAL_NAMES.map(m=>'<button class="chip '+(mealSel===m?'on':'')+'" onclick="mealSel=\''+m+'\';renderFoodModal()">'+m+'</button>').join('')+'</div>'+
+  '<input type="text" placeholder="検索" value="'+foodQ+'" oninput="foodQ=this.value;renderFoodList()" style="width:100%;margin-bottom:8px">'+
+  '<div class="row" style="margin-bottom:8px;gap:6px">'+
+  '<button class="ghost" style="flex:1" onclick="openQuickFood()">✎ 直接入力</button>'+
+  '<button class="ghost" style="flex:1" onclick="photoEstimate()">📷 写真でPFC推定</button></div>'+
+  '<div class="chips" id="fcats">'+FOOD_CATS.map(c=>'<button class="chip '+(foodCat===c[0]?'on':'')+'" onclick="foodCat=\''+c[0]+'\';renderFoodModal()">'+c[1]+'</button>').join('')+'</div>'+
+  '<div id="foodlist">'+foodListHtml(list)+'</div>');
+}
+function foodListHtml(list){
+ return list.length?list.map(f=>'<div class="foodrow"><div><div class="nm">'+(f.sw?'🍰 ':'')+f.n+'</div>'+
+  '<div class="meta">'+f.k+'kcal　P'+f.p+' F'+f.f+' C'+f.c+'</div></div>'+
+  '<button class="addbtn" onclick="addFood(\''+f.id+'\')">＋</button></div>').join('')
+  :'<div class="muted small" style="padding:14px 0">該当なし。マイ食品で登録できます。</div>';
+}
+window.renderFoodList=function(){const list=allFoods().filter(f=>(foodCat==='all'||f.cat===foodCat)&&(!foodQ||f.n.indexOf(foodQ)>=0));
+ document.getElementById('foodlist').innerHTML=foodListHtml(list);};
+window.addFood=function(id){const f=allFoods().find(x=>x.id===id);if(!f)return;
+ D(curDate).meals.push({n:f.n,k:f.k,p:f.p,f:f.f,c:f.c,q:1,meal:mealSel||guessMeal(),sw:f.sw?1:0});
+ save();toast(f.n+' を追加 ✓');};
+window.chgQty=function(i,d){const m=D(curDate).meals[i];m.q=Math.max(0.5,Math.round((m.q+d)*2)/2);saveR();};
+window.delMeal=function(i){D(curDate).meals.splice(i,1);saveR();};
+window.saveSet=function(mn){const items=D(curDate).meals.filter(m=>m.meal===mn);
+ if(!items.length){toast('保存する食事がありません');return;}
+ const name=prompt('セット名（例：いつもの朝食）',mn==='朝'?'いつもの朝食':'');if(!name)return;
+ S.sets.push({name:name,meal:mn,items:JSON.parse(JSON.stringify(items))});save();render();toast('マイセット「'+name+'」を保存 ⚡');};
+window.applySet=function(i){const st=S.sets[i];if(!st)return;const o=D(curDate);
+ st.items.forEach(m=>o.meals.push(JSON.parse(JSON.stringify(m))));saveR();toast(st.name+' を追加 ✓');};
+window.delSetMeal=function(i){if(!confirm('マイセット「'+S.sets[i].name+'」を削除しますか？'))return;S.sets.splice(i,1);saveR();};
+window.copyYesterday=function(){const d=new Date(curDate+'T00:00:00');d.setDate(d.getDate()-1);const y=fmt(d);
+ const ym=(S.days[y]&&S.days[y].meals)||[];if(!ym.length){toast('昨日の記録がありません');return;}
+ const o=D(curDate);ym.forEach(m=>o.meals.push(JSON.parse(JSON.stringify(m))));saveR();toast('昨日の食事をコピーしました');};
+let myEditIdx=null;
+window.openMyFood=function(editIdx){myEditIdx=(editIdx!=null)?editIdx:null;
+ const f=myEditIdx!=null?S.custom[myEditIdx]:null;
+ openModal('<h3>'+(f?'マイ食品を編集':'マイ食品を登録')+'</h3>'+
+ '<label class="fld">名前<input type="text" id="mfn" placeholder="例：母の唐揚げ" value="'+(f?esc(f.n):'')+'" style="width:100%"></label>'+
+ '<div class="grid2" style="margin-top:8px">'+
+ '<label class="fld">kcal<input type="number" id="mfk" inputmode="decimal" value="'+(f?f.k:'')+'" style="width:100%"></label>'+
+ '<label class="fld">タンパク質g<input type="number" id="mfp" inputmode="decimal" value="'+(f?f.p:'')+'" style="width:100%"></label>'+
+ '<label class="fld">脂質g<input type="number" id="mff" inputmode="decimal" value="'+(f?f.f:'')+'" style="width:100%"></label>'+
+ '<label class="fld">糖質g<input type="number" id="mfc" inputmode="decimal" value="'+(f?f.c:'')+'" style="width:100%"></label></div>'+
+ '<label class="row small" style="margin-top:10px;gap:6px"><input type="checkbox" id="mfsw" style="width:auto"'+(f&&f.sw?' checked':'')+'>スイーツ枠に計上する</label>'+
+ '<button class="btn" style="margin-top:12px" onclick="saveMyFood()">'+(f?'更新する':'登録')+'</button>'+
+ (S.custom.length?'<div style="margin-top:16px"><div class="xs muted" style="font-weight:700;letter-spacing:1px;margin-bottom:2px">登録済みマイ食品（タップで編集）</div>'+
+  S.custom.map((m,i)=>'<div class="foodrow"><div onclick="openMyFood('+i+')" style="flex:1"><div class="nm">'+esc(m.n)+'</div>'+
+  '<div class="meta">'+m.k+'kcal　P'+m.p+' F'+m.f+' C'+m.c+'</div></div>'+
+  '<button class="delx" onclick="delMyFood('+i+')">✕</button></div>').join('')+'</div>':''));};
+window.saveMyFood=function(){const n=document.getElementById('mfn').value.trim();
+ const k=parseFloat(document.getElementById('mfk').value)||0,p=parseFloat(document.getElementById('mfp').value)||0,
+ f=parseFloat(document.getElementById('mff').value)||0,c=parseFloat(document.getElementById('mfc').value)||0,
+ sw=document.getElementById('mfsw').checked?1:0;
+ if(!n){toast('名前を入力してください');return;}
+ if(myEditIdx!=null&&S.custom[myEditIdx]){const m=S.custom[myEditIdx];m.n=n;m.k=k;m.p=p;m.f=f;m.c=c;m.sw=sw;
+  save();closeModal();toast('✓ 「'+n+'」を更新しました');}
+ else{S.custom.push({id:'m'+Date.now(),n:n,k:k,p:p,f:f,c:c,sw:sw});
+  save();closeModal();toast('✓ 「'+n+'」を登録しました');}
+ myEditIdx=null;};
+window.delMyFood=function(i){const nm=S.custom[i].n;
+ if(!confirm('マイ食品「'+nm+'」を削除しますか？\n（過去の食事記録はそのまま残ります）'))return;
+ S.custom.splice(i,1);save();openMyFood();toast('✓ 「'+nm+'」を削除しました');};
+window.openQuickFood=function(){const m=mealSel||guessMeal();
+ openModal('<h3>直接入力　<span class="xs muted">'+m+'に追加・リストには登録しない</span></h3>'+
+ '<label class="fld">名前（任意）<input type="text" id="qn" placeholder="例：飲み会の唐揚げ" style="width:100%"></label>'+
+ '<div class="grid2" style="margin-top:8px">'+
+ '<label class="fld">kcal<input type="number" id="qk" inputmode="decimal" style="width:100%"></label>'+
+ '<label class="fld">タンパク質g<input type="number" id="qp" inputmode="decimal" style="width:100%"></label>'+
+ '<label class="fld">脂質g<input type="number" id="qf" inputmode="decimal" style="width:100%"></label>'+
+ '<label class="fld">糖質g<input type="number" id="qc" inputmode="decimal" style="width:100%"></label></div>'+
+ '<label class="row small" style="margin-top:10px;gap:6px"><input type="checkbox" id="qsw" style="width:auto">スイーツ枠に計上する</label>'+
+ '<button class="btn" style="margin-top:12px" onclick="quickAdd()">この食事に追加</button>'+
+ '<button class="ghost" style="width:100%;margin-top:8px" onclick="pasteEstimate()">📋 Claudeの推定を貼り付けて自動入力</button>'+
+ '<div class="xs muted" style="margin-top:8px">分からない時はkcalだけでもOK。写真推定は「📷 写真でPFC推定」から。</div>');};
+window.photoEstimate=function(){
+ const txt='この写真の食事の摂取カロリーとPFC（タンパク質・脂質・糖質）を推定してください。日本の一般的な盛り付け量を基準に、過小評価せず現実的に見積もること。複数の品があれば合計してください。\n回答は説明なしで、次の1行フォーマットだけで返してください：\n【料理名 / 000kcal / P:00g / F:00g / C:00g】';
+ openModal('<h3>写真でPFC推定（Claude連携）</h3>'+
+ '<div class="small" style="line-height:2">'+
+ '① 推定用プロンプトをコピーしました ✓<br>'+
+ '② <b>Claudeアプリ</b>を開き、食事の写真を添付して貼り付け→送信<br>'+
+ '③ 返ってきた【…】の1行をコピー<br>'+
+ '④ ここに戻って下のボタン → 「📋 貼り付けて自動入力」</div>'+
+ '<button class="btn" style="margin-top:12px" onclick="openQuickFood()">直接入力を開く</button>');
+ copyText(txt);};
+window.pasteEstimate=function(){
+ if(!(navigator.clipboard&&navigator.clipboard.readText)){toast('このブラウザでは自動入力が使えません。手入力してください');return;}
+ navigator.clipboard.readText().then(function(t){
+  const k=t.match(/([\d,.]+)\s*kcal/i),p=t.match(/P[:：]\s*([\d.]+)/i),
+   f=t.match(/F[:：]\s*([\d.]+)/i),c=t.match(/C[:：]\s*([\d.]+)/i),
+   nm=t.match(/【([^/／】]+)[/／]/);
+  if(!k&&!p){toast('推定フォーマット【…kcal/P:…】が見つかりませんでした');return;}
+  if(nm)document.getElementById('qn').value=nm[1].trim();
+  if(k)document.getElementById('qk').value=parseFloat(k[1].replace(/,/g,''));
+  if(p)document.getElementById('qp').value=parseFloat(p[1]);
+  if(f)document.getElementById('qf').value=parseFloat(f[1]);
+  if(c)document.getElementById('qc').value=parseFloat(c[1]);
+  toast('✓ 推定値を入力しました。確認して追加！');
+ },function(){toast('クリップボードを読めませんでした');});};
+window.quickAdd=function(){
+ const n=document.getElementById('qn').value.trim()||'直接入力';
+ const k=parseFloat(document.getElementById('qk').value)||0,p=parseFloat(document.getElementById('qp').value)||0,
+ f=parseFloat(document.getElementById('qf').value)||0,c=parseFloat(document.getElementById('qc').value)||0,
+ sw=document.getElementById('qsw').checked?1:0;
+ if(!k&&!p&&!f&&!c){toast('kcalかPFCのどれかを入力してください');return;}
+ D(curDate).meals.push({n:n,k:k,p:p,f:f,c:c,q:1,meal:mealSel||guessMeal(),sw:sw});
+ save();closeModal();toast(n+' を追加 ✓');};
+
+/* ================= 筋トレ ================= */
+function trainTab(){
+ const o=D(curDate);
+ const defKey=menuForDate(curDate);
+ const menuKey=(o.wk&&o.wk.menu)||defKey;
+ const logs=(o.wk&&o.wk.logs)||{};
+ const exList=menuKey?MENUS[menuKey].ex.slice():[];
+ Object.keys(logs).forEach(e=>{if(exList.indexOf(e)<0)exList.push(e);});
+ let vol=0;Object.keys(logs).forEach(e=>{(logs[e]||[]).forEach(s=>{vol+=(parseFloat(s.w)||0)*(parseFloat(s.r)||0);});});
+ return ''+
+ '<div class="card"><div class="row between"><h3 style="margin:0">'+fmtShort(curDate)+' のトレーニング</h3>'+
+  (vol>0?'<span class="num" style="font-size:20px;color:var(--accent)">'+Math.round(vol).toLocaleString()+'<span class="xs muted">kg 総ボリューム</span></span>':'')+'</div>'+
+  '<div style="height:8px"></div>'+
+  '<div class="chips">'+Object.keys(MENUS).map(k=>'<button class="chip '+(menuKey===k?'on':'')+'" onclick="setMenu(\''+k+'\')">'+MENUS[k].name+'</button>').join('')+'</div>'+
+  (menuKey==='rest'?'<div class="muted small" style="margin-top:8px">🛌 今日はレスト日。回復も計画のうち。睡眠・タンパク質・水分を整えよう。</div>':'')+
+  (menuKey!=='rest'?'<details><summary>ウォームアップの基本</summary><div class="small muted" style="line-height:1.6;margin-top:6px">1) 軽い有酸素5分 → 2) 動的ストレッチ（腕回し・股関節回し・ランジウォーク） → 3) 最初のコンパウンド種目でWUセット2回（40%×10回、60%×5回）</div></details>':'')+
+  '<button class="ghost" style="width:100%;margin-top:8px'+(S.injury?';border-color:var(--bad);color:var(--bad)':'')+'" onclick="toggleInjury()">🦴 腰痛モード'+(S.injury?'ON（'+fmtShort(S.injury.since)+'〜・タップで終了）':'（腰を痛めたらON）')+'</button>'+
+ '</div>'+
+ (menuKey&&menuKey!=='rest'?exList.map(ex=>{
+   const g=EXDB[ex];const sets=logs[ex]||[];const prev=prevLog(ex);
+   return '<div class="excard">'+
+    '<div class="row between"><span class="exname" onclick="openGuide(\''+ex+'\')">'+ex+(exIsDb(ex)?' <span class="xs" style="color:var(--muted);font-weight:600">片手</span>':'')+' ⓘ</span>'+
+    '<span class="xs muted">'+(g?g.sr:'')+'</span></div>'+
+    (g?'<div class="xs muted">'+g.t+'</div>':'')+
+    (prev?'<div class="xs" style="color:var(--f);margin-top:4px">前回('+fmtShort(prev.d)+')：'+prev.txt+'</div>':'<div class="xs muted" style="margin-top:4px">前回記録なし — 今日が基準になります</div>')+
+    (function(){if(!(S.injury&&g&&g.spine))return '';
+      const wks=Math.max(0,Math.floor((+new Date(curDate)-+new Date(S.injury.since))/(7*86400000)));
+      const pct=Math.min(100,50+10*wks);
+      const tgt=(prev&&prev.top)?Math.round(prev.top*pct/100/2.5)*2.5:null;
+      return '<div class="xs" style="color:var(--bad);margin-top:4px">🦴 脊柱負荷種目 — 痛みが残るなら「'+(ALT_EX[ex]||'マシン系')+'」で代替を</div>'+
+       (tgt?'<div class="xs" style="color:var(--f)">復帰目安 '+tgt+'kg（直近'+prev.top+'kgの'+pct+'%・痛みゼロなら週+10%）</div>':'');})()+
+    (function(){const tg=exTarget(ex);return tg?'<div class="xs" style="color:var(--accent);margin-top:4px;font-weight:700">🎯 今日の目標: '+tg.label+'</div>':'';})()+
+    (exMode(ex)!=='cardio'?'<div class="xs muted" style="margin-top:4px">⏱ レスト '+fmtClock(exRest(ex))+' <span style="color:var(--accent)" onclick="editRest(\''+ex+'\')">変更</span> ・ ✓を押すと自動でタイマー開始</div>':'')+
+    sets.map((s,i)=>{const md=exMode(ex);
+     if(md==='cardio')return '<div class="setrow" style="flex-wrap:wrap">'+
+      '<span class="row" style="gap:3px"><button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'min\',-5)">−</button><span class="sv" style="width:50px">'+(s.min||0)+'<i>分</i></span><button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'min\',5)">＋</button></span>'+
+      '<span class="row" style="gap:3px"><button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'gr\',-1)">−</button><span class="sv" style="width:44px">'+(s.gr!=null?s.gr:0)+'<i>%</i></span><button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'gr\',1)">＋</button></span>'+
+      '<span class="row" style="gap:3px"><button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'sp\',-0.5)">−</button><span class="sv" style="width:60px">'+(s.sp!=null?s.sp:0)+'<i>km/h</i></span><button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'sp\',0.5)">＋</button></span>'+
+      '<button class="donebtn'+(s.d?' on':'')+'" onclick="toggleSet(\''+ex+'\','+i+')">✓</button>'+
+      '<button class="delx" onclick="delSet(\''+ex+'\','+i+')">✕</button></div>';
+     const unit=exUnit(ex);const rStep=unit==='秒'?5:1;const ws=wStep(ex);
+     return '<div class="setrow"><span class="setn">SET '+(i+1)+'</span>'+
+      (md==='bw'?'':'<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'w\','+(-ws)+')">−</button>'+
+       '<span class="sv">'+(s.w!==''&&s.w!=null?s.w:0)+'<i>kg</i></span>'+
+       '<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'w\','+ws+')">＋</button>')+
+      '<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'r\',-'+rStep+')">−</button>'+
+      '<span class="sv">'+(s.r!==''&&s.r!=null?s.r:0)+'<i>'+unit+'</i></span>'+
+      '<button class="stepbtn" onclick="stepSet(\''+ex+'\','+i+',\'r\','+rStep+')">＋</button>'+
+      '<button class="donebtn'+(s.d?' on':'')+'" onclick="toggleSet(\''+ex+'\','+i+')">✓</button>'+
+      '<button class="delx" onclick="delSet(\''+ex+'\','+i+')">✕</button></div>';}).join('')+
+    (function(){if(exMode(ex)!=='wt'||!prev||prev.top==null||prev.top<=0)return '';
+      const jump=sets.some(function(s){return s.w!==''&&s.w!=null&&parseFloat(s.w)>prev.top*1.05+0.001;});
+      return jump?'<div class="xs" style="color:var(--bad);margin-top:6px">⚠️ 前回トップ'+prev.top+'kgから+5%超の重量です。ジャンプは1段階（'+wStep(ex)+'kg）ずつが安全</div>':'';})()+
+    (function(){if(exMode(ex)==='cardio'||!sets.some(function(s){return s.d;}))return '';
+      const cur=(logs&&D(curDate).wk&&D(curDate).wk.rpeMap)?D(curDate).wk.rpeMap[ex]:null;
+      return '<div class="row" style="gap:6px;margin-top:8px"><span class="xs muted">手応え:</span>'+
+       [['easy','余裕'],['ok','丁度'],['hard','限界']].map(function(o2){
+        return '<button class="chip'+(cur===o2[0]?' on':'')+'" style="padding:4px 12px;font-size:11px" onclick="setRpe(\''+ex+'\',\''+o2[0]+'\')">'+o2[1]+'</button>';}).join('')+
+       '<span class="xs muted">→次回の目標に反映</span></div>';})()+
+    '<button class="ghost" style="margin-top:8px;width:100%" onclick="addSet(\''+ex+'\')">＋ セット追加</button>'+
+   '</div>';
+  }).join('')+
+  '<button class="ghost" style="width:100%;margin-bottom:12px" onclick="addCustomEx()">＋ メニュー外の種目を追加</button>'
+ :'');
+}
+function ensureWk(){const o=D(curDate);if(!o.wk){const def=menuForDate(curDate)||'chest';o.wk={menu:def,logs:{}};}
+ if(!o.wk.logs)o.wk.logs={};return o.wk;}
+window.setMenu=function(k){const wk=ensureWk();wk.menu=k;saveR();};
+window.addSet=function(ex){const wk=ensureWk();if(!wk.logs[ex])wk.logs[ex]=[];
+ const arr=wk.logs[ex];const md=exMode(ex);const p=prevLog(ex);
+ if(md==='cardio'){
+  const base=arr.length?arr[arr.length-1]:(p&&p.last&&p.last.min!=null?p.last:{min:30,gr:12,sp:6});
+  arr.push({min:base.min||30,gr:(base.gr!=null?base.gr:12),sp:(base.sp!=null?base.sp:6)});}
+ else if(md==='bw'){
+  const def=exUnit(ex)==='秒'?45:10;
+  const base=arr.length?arr[arr.length-1]:(p&&p.last?p.last:null);
+  arr.push({r:(base&&base.r)?base.r:def});}
+ else{let w=0,r=8;
+  if(arr.length){w=parseFloat(arr[arr.length-1].w)||0;r=parseFloat(arr[arr.length-1].r)||8;}
+  else if(p&&p.top!=null)w=p.top;
+  arr.push({w:w,r:r});}
+ saveR();};
+window.setSet=function(ex,i,f,v){const wk=ensureWk();const s=wk.logs[ex][i];if(!s)return;
+ const n=parseFloat(v);s[f]=isNaN(n)?'':n;save();};
+window.stepSet=function(ex,i,f,d){const wk=ensureWk();const s=wk.logs[ex][i];if(!s)return;
+ let v=(parseFloat(s[f])||0)+d;if(v<0)v=0;s[f]=Math.round(v*10)/10;saveR();};
+window.toggleSet=function(ex,i){const wk=ensureWk();const s=wk.logs[ex][i];if(!s)return;
+ const turningOn=!s.d;s.d=s.d?0:1;saveR();
+ if(turningOn){const r=exRest(ex);if(r>0)startRest(ex,r);}};
+
+/* ===== レストタイマー ===== */
+let restState=null,restAudio=null;
+function beep(){try{if(!restAudio)restAudio=new (window.AudioContext||window.webkitAudioContext)();
+ const c=restAudio;if(c.state==='suspended')c.resume();
+ [0,0.18,0.36].forEach(function(dt){const o=c.createOscillator(),g=c.createGain();
+  o.frequency.value=880;o.connect(g);g.connect(c.destination);
+  const t0=c.currentTime+dt;g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(0.25,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+0.13);o.start(t0);o.stop(t0+0.14);});
+ }catch(e){}}
+function fmtClock(s){const m=Math.floor(s/60),ss=('0'+(s%60)).slice(-2);return m+':'+ss;}
+function restRemaining(){if(!restState)return 0;return Math.max(0,Math.round((restState.endAt-Date.now())/1000));}
+function renderRestBar(){const b=document.getElementById('restbar');if(!restState)return;
+ const rem=restRemaining();const done=rem<=0;
+ b.className='restbar'+(done?' done':'');
+ b.innerHTML='<span class="rt">'+(done?'0:00':fmtClock(rem))+'</span>'+
+  '<span class="rex">'+(done?'✓ レスト終了 — 次のセットへ':restState.ex+'　レスト')+'</span>'+
+  (done?'':'<button onclick="adjRest(-15)">−15</button><button onclick="adjRest(15)">+15</button>')+
+  '<button class="skip" onclick="stopRest()">'+(done?'閉じる':'スキップ')+'</button>';}
+function restFire(){if(!restState||restState.fired)return;restState.fired=true;
+ if(restState.id){clearInterval(restState.id);restState.id=null;}
+ renderRestBar();beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);
+ restState.hide=setTimeout(stopRest,8000);}
+function restTick(){if(!restState)return;
+ if(restRemaining()<=0)restFire();else renderRestBar();}
+function startRest(ex,sec){stopRestTimer();
+ restState={ex:ex,endAt:Date.now()+sec*1000,fired:false};
+ document.getElementById('rest').classList.add('show');renderRestBar();
+ restState.id=setInterval(restTick,1000);}
+function stopRestTimer(){if(restState){if(restState.id)clearInterval(restState.id);if(restState.hide)clearTimeout(restState.hide);}}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&restState)restTick();});
+window.addEventListener('focus',function(){if(restState)restTick();});
+window.adjRest=function(d){if(!restState||restState.fired)return;restState.endAt+=d*1000;
+ if(restState.endAt<Date.now()+1000)restState.endAt=Date.now()+1000;renderRestBar();};
+window.editRest=function(ex){const cur=exRest(ex);const v=prompt(ex+' のレスト秒数',cur);
+ if(v===null)return;const n=parseInt(v);if(isNaN(n)||n<0){toast('数字を入力してください');return;}
+ S.rest[ex]=n;save();render();toast('✓ '+ex+' のレストを'+fmtClock(n)+'に設定');};
+window.stopRest=function(){stopRestTimer();restState=null;const r=document.getElementById('rest');if(r)r.classList.remove('show');};
+window.delSet=function(ex,i){const wk=ensureWk();wk.logs[ex].splice(i,1);if(!wk.logs[ex].length)delete wk.logs[ex];saveR();};
+window.addCustomEx=function(){const n=prompt('種目名を入力');if(!n)return;const wk=ensureWk();
+ if(!wk.logs[n])wk.logs[n]=[{w:'',r:''}];saveR();};
+function exMode(ex){const g=EXDB[ex];return g&&g.mode?g.mode:'wt';}
+function exUnit(ex){const g=EXDB[ex];return g&&g.unit?g.unit:'回';}
+function exIsDb(ex){const g=EXDB[ex];return !!(g&&g.db);}
+function wStep(ex){return exIsDb(ex)?1:2.5;}
+const BIGLIFT=['ベンチプレス','バーベルスクワット','ルーマニアンデッドリフト','懸垂'];
+const COMPOUND=['インクラインダンベルプレス','ショルダープレス','レッグプレス','ダンベルロウ','シーテッドケーブルロウ','ブルガリアンスクワット','ヒップスラスト','ウォーキングランジ','ラットプルダウン'];
+const ALT_EX={'バーベルスクワット':'レッグプレス','ルーマニアンデッドリフト':'レッグカール','ヒップスラスト':'レッグカール','アブローラー':'デッドバグ'};
+window.toggleInjury=function(){
+ if(S.injury){if(!confirm('腰痛モードを終了しますか？（痛みが完全に消えてから）'))return;
+  S.injury=null;toast('腰痛モード終了。復帰はゆっくりと💪');}
+ else{S.injury={since:curDate};toast('🦴 腰痛モードON — 脊柱負荷種目に警告と代替案を表示します');}
+ saveR();};
+function exRest(ex){if(S.rest&&S.rest[ex]!=null)return S.rest[ex];
+ if(exMode(ex)==='cardio')return 0;
+ if(exMode(ex)==='bw')return 45;
+ if(BIGLIFT.indexOf(ex)>=0)return 300;
+ if(COMPOUND.indexOf(ex)>=0)return 180;
+ return 90;}
+function fmtSet(s,ex){
+ if(s.min!=null)return s.min+'分・勾配'+(s.gr!=null?s.gr:0)+'%・'+(s.sp!=null?s.sp:0)+'km/h';
+ if(exMode(ex)==='bw')return (s.r!==''&&s.r!=null?s.r:0)+exUnit(ex);
+ return (s.w!==''&&s.w!=null&&s.w>0?s.w+'kg'+(exIsDb(ex)?'(片手)':''):'自重')+'×'+(s.r!==''&&s.r!=null?s.r:0);}
+function prevLog(ex){const ds=Object.keys(S.days).filter(d=>d<curDate&&S.days[d].wk&&S.days[d].wk.logs&&(S.days[d].wk.logs[ex]||[]).some(s=>s.r||s.w||s.min)).sort();
+ if(!ds.length)return null;const d=ds[ds.length-1];const sets=S.days[d].wk.logs[ex].filter(s=>s.r||s.w||s.min);
+ const txt=sets.map(s=>fmtSet(s,ex)).join(', ');
+ let top=null;sets.forEach(s=>{if(s.w!==''&&s.w!=null&&(top==null||s.w>top))top=s.w;});
+ const rpe=S.days[d].wk.rpeMap?S.days[d].wk.rpeMap[ex]:null;
+ return {d:d,txt:txt,top:top,last:sets[sets.length-1],sets:sets,rpe:rpe};}
+const RPE_LABEL={easy:'余裕',ok:'丁度',hard:'限界'};
+function exTarget(ex){
+ if(exMode(ex)==='cardio')return null;
+ if(S.injury&&EXDB[ex]&&EXDB[ex].spine)return null;
+ const p=prevLog(ex);if(!p||!p.sets||!p.sets.length)return null;
+ const g=EXDB[ex];if(!g||!g.sr)return null;
+ const m=g.sr.match(/(\d+)セット×(\d+)(?:-(\d+))?/);
+ if(!m){const tot=p.sets.reduce(function(a,s){return a+(parseFloat(s.r)||0);},0);
+  return tot?{label:'前回合計'+tot+'回 → 今日は'+(tot+1)+'回'}:null;}
+ const nSets=parseInt(m[1]),lo=parseInt(m[2]),hi=m[3]?parseInt(m[3]):lo;
+ if(exMode(ex)==='bw'){
+  const minR=Math.min.apply(null,p.sets.map(function(s){return parseFloat(s.r)||0;}));
+  const everyHi=p.sets.length>=nSets&&p.sets.every(function(s){return (parseFloat(s.r)||0)>=hi;});
+  return everyHi?{label:'全セット'+hi+exUnit(ex)+'達成済み → '+(hi+ (exUnit(ex)==='秒'?15:2))+exUnit(ex)+'に挑戦'}
+   :{label:'全セット'+Math.min(hi,minR+1)+exUnit(ex)+'以上を狙う'};}
+ const top=p.top||0;if(!top)return null;
+ const everyHi=p.sets.length>=nSets&&p.sets.every(function(s){return (parseFloat(s.r)||0)>=hi;});
+ if(everyHi&&p.rpe!=='hard'){
+  const nw=Math.round((top+wStep(ex))*10)/10;
+  return {label:'重量UP！ '+nw+'kg×'+lo+'回〜（前回'+top+'kgで全セット上限クリア'+(p.rpe==='easy'?'・余裕あり':'')+'）'};}
+ const minR=Math.min.apply(null,p.sets.map(function(s){return parseFloat(s.r)||0;}));
+ return {label:top+'kg×'+Math.min(hi,minR+1)+'回以上を全セット（'+hi+'回×'+nSets+'セットで次回重量UP）'+(p.rpe==='hard'?'・前回は限界。同重量で丁寧に':'')};}
+window.setRpe=function(ex,v){const wk=ensureWk();if(!wk.rpeMap)wk.rpeMap={};
+ wk.rpeMap[ex]=(wk.rpeMap[ex]===v)?null:v;saveR();};
+window.openGuide=function(ex){const g=EXDB[ex];
+ if(!g){openModal('<h3>'+ex+'</h3><div class="muted small">カスタム種目のためガイドはありません。</div>');return;}
+ openModal('<h3>'+ex+'</h3><div class="small muted">'+g.t+'　｜　'+g.sr+'</div>'+
+  '<div class="guide"><div style="font-weight:800;margin:10px 0 6px">やり方</div><ol style="padding-left:20px;margin:0">'+
+  g.steps.map(s=>'<li>'+s+'</li>').join('')+'</ol>'+
+  '<div style="font-weight:800;margin:12px 0 6px">⚠️ 注意点・コツ</div><ul style="padding-left:20px;margin:0">'+
+  g.tips.map(s=>'<li class="tip">'+s+'</li>').join('')+'</ul></div>');};
+
+/* ================= グラフ ================= */
+function graphTab(){
+ const P=S.profile;
+ const wPts=Object.keys(S.days).filter(d=>S.days[d].weight!=null).sort().map(d=>[+new Date(d),S.days[d].weight]);
+ const bPts=Object.keys(S.days).filter(d=>S.days[d].bf!=null).sort().map(d=>[+new Date(d),S.days[d].bf]);
+ const wsPts=Object.keys(S.days).filter(d=>S.days[d].waist!=null).sort().map(d=>[+new Date(d),S.days[d].waist]);
+ const gl=[[+new Date(P.startDate),P.startWeight],[+new Date(P.goalDate),P.goalWeight]];
+ const gb=[[+new Date(P.startDate),P.startBF],[+new Date(P.goalDate),P.goalBF]];
+ const exNames=[];Object.keys(S.days).forEach(d=>{const wk=S.days[d].wk;if(wk&&wk.logs)Object.keys(wk.logs).forEach(e=>{if(exNames.indexOf(e)<0)exNames.push(e);});});
+ if(!exSel&&exNames.length)exSel=exNames[0];
+ const ePts=exSel?Object.keys(S.days).filter(d=>S.days[d].wk&&S.days[d].wk.logs&&(S.days[d].wk.logs[exSel]||[]).some(s=>s.w!==''&&s.w!=null)).sort()
+  .map(d=>{let top=0;S.days[d].wk.logs[exSel].forEach(s=>{if(s.w!==''&&s.w!=null&&s.w>top)top=s.w;});return [+new Date(d),top];}):[];
+ if(photosCache===null&&db)loadPhotos();
+ return ''+
+ '<div class="card"><h3>体重　<span class="xs muted">点線=目標 / 細線=7日平均</span></h3>'+
+  lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:ma7(wPts),color:'#8A5643'},{pts:wPts,color:'#F0865A',dots:1}],170)+'</div>'+
+ '<div class="card"><h3>ウエスト　<span class="xs muted">脂肪の最も正確な指標</span></h3>'+
+  (wsPts.length?lineChart([{pts:wsPts,color:'#F0865A',dots:1}],150):'<div class="muted small">週1回おへそ周りを測ると、ここに脂肪の推移が出ます</div>')+'</div>'+
+ '<div class="card"><h3>体脂肪率　<span class="xs muted">家庭用は誤差大・月1で参考程度に</span></h3>'+
+  lineChart([{pts:gb,color:'#5C564A',dash:1},{pts:bPts,color:'#6B97C2',dots:1}],150)+'</div>'+
+ '<div class="card"><h3>種目の重量推移</h3>'+
+  (exNames.length?'<select onchange="exSel=this.value;render()" style="width:100%;margin-bottom:8px">'+
+   exNames.map(e=>'<option '+(e===exSel?'selected':'')+'>'+e+'</option>').join('')+'</select>'+
+   lineChart([{pts:ePts,color:'#9BC47F',dots:1}],150):'<div class="muted small">筋トレ記録がたまると表示されます</div>')+'</div>'+
+ '<div class="card"><h3>進捗写真　<span class="xs muted">月1回・同条件で</span></h3>'+
+  '<label class="ghost" style="display:block;text-align:center;margin-bottom:10px">＋ '+fmtShort(curDate)+' の写真を追加'+
+  '<input type="file" accept="image/*" style="display:none" onchange="addPhoto(event)"></label>'+
+  (photosCache&&photosCache.length>=2?(function(){
+    const a=photosCache[0],b=photosCache[photosCache.length-1];
+    const ua=URL.createObjectURL(a.blob),ub=URL.createObjectURL(b.blob);
+    const wa=weightAt(a.date),wb=weightAt(b.date);
+    return '<div class="grid2" style="margin-bottom:10px">'+
+     '<div class="ph"><img src="'+ua+'" style="height:200px"><div class="pd"><span>BEFORE '+fmtShort(a.date)+'</span><span class="num">'+(wa?wa+'kg':'')+'</span></div></div>'+
+     '<div class="ph" style="border-color:var(--accent2)"><img src="'+ub+'" style="height:200px"><div class="pd"><span>NOW '+fmtShort(b.date)+'</span><span class="num">'+(wb?wb+'kg':'')+'</span></div></div>'+
+    '</div>';})():'')+
+  '<div class="photogrid">'+(photosCache&&photosCache.length?photosCache.map(p=>{
+    const u=URL.createObjectURL(p.blob);
+    return '<div class="ph"><img src="'+u+'"><div class="pd"><span>'+fmtShort(p.date)+'</span><span onclick="delPhoto('+p.id+')">🗑</span></div></div>';
+  }).join(''):'<div class="muted small" style="grid-column:1/4">Day 0の写真をここに入れましょう</div>')+'</div>'+
+ '</div>';
+}
+function loadPhotos(){if(!db)return;const tx=db.transaction('photos','readonly').objectStore('photos').getAll();
+ tx.onsuccess=function(){photosCache=tx.result.sort((a,b)=>a.date<b.date?-1:1);if(tab==='graph')render();};}
+window.addPhoto=function(ev){const file=ev.target.files[0];if(!file||!db)return;
+ db.transaction('photos','readwrite').objectStore('photos').add({date:curDate,blob:file}).onsuccess=function(){photosCache=null;loadPhotos();toast('写真を保存しました 📸');};};
+window.delPhoto=function(id){if(!confirm('この写真を削除しますか？'))return;
+ db.transaction('photos','readwrite').objectStore('photos').delete(id).onsuccess=function(){photosCache=null;loadPhotos();};};
+
+/* ================= 設定 ================= */
+function setTab(){
+ const P=S.profile;
+ function fld(label,key,step){return '<label class="fld">'+label+'<input type="number" step="'+(step||1)+'" inputmode="decimal" value="'+P[key]+'" onchange="setProf(\''+key+'\',this.value)" style="width:100%"></label>';}
+ return ''+
+ '<div class="card"><h3>目標設定</h3><div class="grid2">'+
+  fld('目標体重kg','goalWeight',0.5)+
+  '<label class="fld">目標日<input type="date" value="'+P.goalDate+'" onchange="setProfStr(\'goalDate\',this.value)" style="width:100%"></label>'+
+  fld('目標体脂肪%','goalBF',0.5)+fld('身長cm','height')+fld('摂取kcal','kcal',50)+
+  fld('タンパク質g','p',5)+fld('脂質g','f',5)+fld('糖質g','c',10)+fld('水分ml','water',250)+
+  fld('スイーツ枠kcal','sweets',50)+
+ '</div><div class="xs muted" style="margin-top:8px">スタート：'+P.startDate+'　'+P.startWeight+'kg / '+P.startBF+'%</div></div>'+
+ '<div class="card"><h3>週次トレーナー面談</h3>'+
+  '<button class="btn" onclick="weeklyReview()">直近7日のレポートをコピー</button>'+
+  '<div class="xs muted" style="margin-top:8px">コピーしたらClaudeに貼り付けてください。評価・問題点・来週の指示が返ってきます。</div></div>'+
+ '<div class="card"><h3>データ</h3>'+
+  '<button class="btn" style="margin-bottom:8px" onclick="shareJson()">☁ バックアップを保存（iCloud/ファイルへ）</button>'+
+  '<div class="row" style="gap:8px"><button class="ghost" style="flex:1" onclick="exportJson()">エクスポート</button>'+
+  '<label class="ghost" style="flex:1;text-align:center">インポート<input type="file" accept=".json" style="display:none" onchange="importJson(event)"></label>'+
+  '<button class="ghost" style="flex:1" onclick="openBackups()">自動保存から復元</button></div>'+
+  '<div class="xs muted" style="margin-top:8px">起動のたびに端末内へ自動スナップショット（14日分）。それとは別に、週1回「バックアップを保存」でiCloudにも逃がすのが最強です。最終バックアップ: '+(S.lastExport?fmtShort(fmt(new Date(S.lastExport))):'未実施')+'</div>'+
+  '<button class="ghost" style="width:100%;margin-top:10px;color:var(--bad)" onclick="resetAll()">全データを初期化</button></div>'+
+ '<div class="card"><h3>iPhoneに入れる方法</h3><div class="small muted" style="line-height:1.7">'+
+  '① このファイルをWeb上にホスティング（GitHub Pages / Netlify等・無料）<br>'+
+  '② SafariでそのURLを開く<br>③ 共有ボタン → 「ホーム画面に追加」<br>'+
+  '→ アプリのように全画面で起動します。ホスティングはClaudeに「ムキムキ計画を公開したい」と言えば手伝います。</div></div>'+
+ '<div class="xs muted" style="text-align:center;padding:6px 0 18px;font-family:var(--serif);font-style:italic">ムキムキ計画 塚田バージョン — '+P.name+' × Claude</div>';
+}
+window.setProf=function(k,v){const n=parseFloat(v);if(!isNaN(n))S.profile[k]=n;saveR();};
+window.applyKcal=function(k){const P=S.profile;P.kcal=k;
+ P.f=Math.max(60,Math.round((k-P.p*4-P.c*4)/9/5)*5);saveR();
+ toast('目標を'+k.toLocaleString()+'kcal（脂質F'+P.f+'g・糖質は'+P.c+'gのまま）に更新しました');};
+window.editMission=function(){const cur=S.mission?S.mission.text:'';
+ const t=prompt('今週のミッション（週次面談でのClaudeの指示を貼ると、1週間ホームに表示されます）',cur);
+ if(t===null)return;S.mission=t.trim()?{text:t.trim(),setAt:curDate}:null;saveR();};
+window.setProfStr=function(k,v){if(v)S.profile[k]=v;saveR();};
+window.exportJson=function(){const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+ a.download='mukimuki_tsukada_backup_'+curDate.replace(/-/g,'')+'.json';a.click();
+ S.lastExport=Date.now();save();toast('エクスポートしました');};
+window.shareJson=function(){
+ const json=JSON.stringify(S,null,1);
+ const file=new File([json],'mukimuki_tsukada_backup_'+fmt(new Date()).replace(/-/g,'')+'.json',{type:'application/json'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+  navigator.share({files:[file],title:'ムキムキ計画 塚田バックアップ'}).then(function(){
+   S.lastExport=Date.now();save();render();toast('✓ バックアップを保存しました');
+  }).catch(function(){});
+ }else{exportJson();render();}};
+/* 自動スナップショット（IndexedDBに日次・14世代） */
+function autoSnapshot(){if(!db||!db.objectStoreNames.contains('backups'))return;
+ try{const st=db.transaction('backups','readwrite').objectStore('backups');
+  st.put({d:fmt(new Date()),ts:Date.now(),data:localStorage.getItem(LS)});
+  const kq=st.getAllKeys();
+  kq.onsuccess=function(){const ks=kq.result.sort();while(ks.length>14){st.delete(ks.shift());}};
+ }catch(e){}}
+window.openBackups=function(){if(!db||!db.objectStoreNames.contains('backups')){toast('スナップショットがまだありません');return;}
+ const q=db.transaction('backups','readonly').objectStore('backups').getAll();
+ q.onsuccess=function(){const bs=q.result.sort(function(a,b){return a.d<b.d?1:-1;});
+  if(!bs.length){toast('スナップショットがまだありません');return;}
+  openModal('<h3>自動スナップショットから復元</h3>'+
+   '<div class="xs muted" style="margin-bottom:8px">毎日の起動時に自動保存された14日分。復元すると現在のデータは上書きされます。</div>'+
+   bs.map(function(b){const d=JSON.parse(b.data||'{}');const days=d.days?Object.keys(d.days).length:0;
+    return '<div class="foodrow"><div><div class="nm">'+b.d+'</div><div class="meta">記録'+days+'日分</div></div>'+
+     '<button class="mini" onclick="restoreBackup(\''+b.d+'\')">復元</button></div>';}).join(''));};};
+window.restoreBackup=function(d){if(!confirm(d+' 時点のデータに戻します。現在のデータは上書きされます。よろしいですか？'))return;
+ const q=db.transaction('backups','readonly').objectStore('backups').get(d);
+ q.onsuccess=function(){if(q.result&&q.result.data){localStorage.setItem(LS,q.result.data);location.reload();}
+  else toast('復元データが見つかりませんでした');};};
+window.importJson=function(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();
+ r.onload=function(){try{const d=JSON.parse(r.result);if(!d.profile||!d.days)throw 0;S=d;save();render();toast('インポートしました ✓');}
+ catch(e){toast('ファイルが読めませんでした');}};r.readAsText(f);};
+window.resetAll=function(){if(!confirm('全データを削除します。エクスポート済みですか？'))return;
+ if(!confirm('本当に初期化しますか？'))return;localStorage.removeItem(LS);location.reload();};
+
+/* ================= 週次レビュー ================= */
+window.weeklyReview=function(){
+ const P=S.profile;const lines=[];
+ for(let i=6;i>=0;i--){const d=new Date(curDate+'T00:00:00');d.setDate(d.getDate()-i);const ds=fmt(d);
+  const o=S.days[ds]||{};const t=dayTotals(ds);
+  let wk='休み';
+  if(o.wk&&o.wk.logs&&Object.keys(o.wk.logs).length){
+   const parts=Object.keys(o.wk.logs).map(ex=>{const sets=o.wk.logs[ex].filter(s=>s.r||s.w||s.min);
+    if(!sets.length)return null;
+    const rp=o.wk.rpeMap&&o.wk.rpeMap[ex]?'(手応え:'+RPE_LABEL[o.wk.rpeMap[ex]]+')':'';
+    return ex+' '+sets.map(s=>fmtSet(s,ex)).join('/')+rp;}).filter(Boolean);
+   if(parts.length)wk=(MENUS[o.wk.menu]?MENUS[o.wk.menu].name:'')+'：'+parts.join('、');
+  }
+  const cardio=(o.cardio||[]).map(c=>c.type+c.min+'分(約'+cardioKcal(c.type,c.min,ds)+'kcal)').join('、')||'なし';
+  let meals='記録なし';
+  if(o.meals&&o.meals.length){
+   meals=MEAL_NAMES.map(function(mn){
+    const its=o.meals.filter(function(m){return m.meal===mn;});
+    if(!its.length)return null;
+    return mn+'['+its.map(function(m){return m.n+(m.q&&m.q!==1?'×'+m.q:'');}).join('・')+']';
+   }).filter(Boolean).join(' ');
+  }
+  lines.push(fmtShort(ds)+(o.event?'【会食日・枠'+o.event.kcal+'kcal】':'')+'｜体重'+(o.weight!=null?o.weight+'kg':'未計測')+(o.bf!=null?'/'+o.bf+'%':'')+(o.waist!=null?'/ウエスト'+o.waist+'cm':'')+
+   '｜摂取'+t.k+'kcal P'+t.p+' F'+t.f+' C'+t.c+'（スイーツ'+t.sw+'kcal）'+
+   '｜食事内容：'+meals+
+   '｜水分'+((o.water||0)/1000).toFixed(1)+'L｜睡眠'+(o.sleep!=null?o.sleep+'h':'未記録')+
+   '｜筋トレ：'+wk+'｜有酸素：'+cardio);
+ }
+ const lw=latestWeight(curDate);const w=lw?lw.w:P.startWeight;const line=goalLineAt(curDate);
+ const txt='あなたは私の専属パーソナルトレーナーです（ライザップ式：結果にコミット、厳しくも温かく）。\n'+
+ '以下の1週間のデータを分析して、次の5点を簡潔に出してください。\n'+
+ '1. 今週の評価（100点満点と一言）\n2. 良かった点\n3. 問題点とその原因分析\n'+
+ '4. 来週の具体的な指示（食事・トレーニング・生活で各1つ以上、数値で）\n5. 停滞している場合の打ち手\n'+
+ '※このメッセージに食事や体の写真が添付されていたら、数値に表れない食事の質（野菜・タンパク源・加工度・外食の内容）や体の変化も必ず評価に含めてください。\n\n'+
+ '【プロフィール】27歳男性 '+P.height+'cm。開始時('+P.startDate+') '+P.startWeight+'kg/体脂肪'+P.startBF+'%。\n'+
+ '【目標】'+P.goalDate+'のボディビル大会当日に'+P.goalWeight+'kg/体脂肪'+P.goalBF+'%でステージに立つ。減量ペースが週1kgを大きく超えていないか、筋量が削れていないかを必ずチェックすること。\n'+
+ '【トレーニング方針】毎日トレーニング（胸→背中→腕・肩→脚の4分割ローテ、休息日なし）。疲労・関節痛・睡眠不足のサインが記録に見えたら、勇気を持って軽い日や休みを指示すること。\n'+
+ '【食事法】ケトジェニック（糖質'+P.c+'g以下/日・脂質でカロリーを作る）。糖質超過の日がないか、電解質（塩分・マグネシウム・カリウム）と水分、導入期の体調不良、脂質不足でカロリーが足りていない日がないかも必ず評価すること。\n'+
+ '【日次目標】'+P.kcal+'kcal、P'+P.p+'g/F'+P.f+'g/C'+P.c+'g、水分'+(P.water/1000)+'L、睡眠'+P.sleep+'h以上。\n'+
+ '【現在地】最新体重'+w+'kg（理想ライン'+line.toFixed(1)+'kg、差'+(w-line>=0?'+':'')+(w-line).toFixed(1)+'kg）\n'+
+ '【今週のミッション】'+(S.mission&&S.mission.text?S.mission.text:'未設定')+'\n\n'+
+ '【今週の記録】\n'+lines.join('\n');
+ copyText(txt);
+ openModal('<h3>週次面談の準備ができました</h3>'+
+  '<div class="small" style="line-height:2">'+
+  '① レポートをコピーしました ✓<br>'+
+  '② <b>Claudeアプリ</b>を開いて貼り付け→送信<br>'+
+  '③ <b>今週の食事写真があれば一緒に添付</b>すると、数値に出ない「食事の質」まで評価してくれます📷<br>'+
+  '④ 返ってきた来週の指示は「ミッション編集」に貼って常時表示</div>'+
+  '<div class="xs muted" style="margin-top:10px">食事写真はアプリに保存せず、普段どおりカメラロールでOK。撮るだけでも食べ方が変わります。</div>');
+};
+function copyText(t){
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(t).then(function(){toast('コピーしました。Claudeに貼ってください 🧑‍🏫');},function(){fallbackCopy(t);});
+ }else fallbackCopy(t);
+}
+function fallbackCopy(t){openModal('<h3>レポートを全選択してコピー</h3>'+
+ '<textarea style="width:100%;height:300px;font-size:12px" onclick="this.select()">'+
+ t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</textarea>');}
+
+/* ================= 共通UI ================= */
+function openModal(html){document.getElementById('sheet').innerHTML='<button class="sheetclose" onclick="closeModal()">✕ 閉じる</button>'+html;
+ document.getElementById('modal').classList.add('show');document.getElementById('sheet').scrollTop=0;}
+window.closeModal=function(){document.getElementById('modal').classList.remove('show');if(tab==='food')render();};
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+ clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove('show');},2200);}
+const TABS={home:homeTab,food:foodTab,train:trainTab,graph:graphTab,set:setTab};
+function ic(paths){return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+paths+'</svg>';}
+const NAV=[
+ ['home',ic('<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/>'),'ホーム'],
+ ['food',ic('<path d="M4 3v5a3 3 0 0 0 6 0V3"/><path d="M7 3v18"/><path d="M17 21V3c2.5 3 2.5 7 0 10"/>'),'食事'],
+ ['train',ic('<path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/>'),'筋トレ'],
+ ['graph',ic('<path d="M4 4v16h16"/><path d="M7 15l4-5 3 3 5-7"/>'),'グラフ'],
+ ['set',ic('<path d="M5 8h14M5 16h14"/><circle cx="10" cy="8" r="2.2"/><circle cx="14" cy="16" r="2.2"/>'),'設定']];
+window.go=function(t){tab=t;render();window.scrollTo(0,0);};
+function render(){
+ document.getElementById('dlabel').textContent=fmtShort(curDate)+(curDate===fmt(new Date())?'・今日':'');
+ document.getElementById('view').innerHTML=TABS[tab]();
+ document.getElementById('nav').innerHTML=NAV.map(n=>'<button class="'+(tab===n[0]?'on':'')+'" onclick="go(\''+n[0]+'\')"><span class="ic">'+n[1]+'</span>'+n[2]+'</button>').join('');
+}
+/* IndexedDB 写真 */
+(function(){const req=indexedDB.open('mukimuki_tsukada',2);
+ req.onupgradeneeded=function(e){const d=e.target.result;
+  if(!d.objectStoreNames.contains('photos'))d.createObjectStore('photos',{keyPath:'id',autoIncrement:true});
+  if(!d.objectStoreNames.contains('backups'))d.createObjectStore('backups',{keyPath:'d'});};
+ req.onsuccess=function(e){db=e.target.result;autoSnapshot();};
+})();
+render();
+</script>
+</body>
+</html>
