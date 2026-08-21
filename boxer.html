@@ -867,9 +867,10 @@ function homeTab(){
     '<a class="glink" onclick="go(\'set\')">→ 設定を開く</a></div></div>';
   return '';})()+
  (function(){ /* index.html と localStorage を共有しているので目標は自動書き換えせず、ワンタップで切り替える */
+  if(!P.startWeight)return ''; /* 初期設定バナーを先に出す。2枚並べない */
   if(P.goalWeight===BOXER_GOAL.goalWeight&&P.goalBF===BOXER_GOAL.goalBF&&P.goalWaist===BOXER_GOAL.goalWaist)return '';
   return '<div class="card" style="padding:11px 14px;margin-bottom:10px;border-color:var(--bad)">'+
-   '<div class="small" style="line-height:1.6">🥊 目標がまだ<b>筋肥大(鈴木亮平)仕様</b>です。BOXER PROTOCOL の第1目標は '+
+   '<div class="small" style="line-height:1.6">🥊 '+(P.goalWeight?'目標がまだ<b>筋肥大(鈴木亮平)仕様</b>です':'目標がまだ設定されていません')+'。BOXER PROTOCOL の第1目標は '+
    '<b>'+BOXER_GOAL.goalWeight+'kg / 体脂肪'+BOXER_GOAL.goalBF+'% / ウエスト'+BOXER_GOAL.goalWaist+'cm</b>（ミドル級ゾーン）。'+
    '<br><a class="glink" onclick="applyBoxerGoal()">→ ワンタップでBOXER仕様に切り替える</a></div></div>';})()+
  (function(){const pw=progWeek(curDate);if(pw<=0||pw>PROG_WEEKS+2)return '';
