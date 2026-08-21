@@ -180,9 +180,11 @@ label.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--
 <script>
 /* ================= データ ================= */
 const LS='mukimuki_v1';
-const DEF_PROFILE={height:177,startDate:'2026-06-11',startWeight:82.9,startBF:25.6,
-  goalWeight:74,goalBF:13,goalDate:'2026-12-11',goalWaist:78,kcal:2250,p:150,f:60,c:270,
-  water:3000,sleep:7,sweets:200,name:'SHOGO'};
+/* GitHub Pages で公開するため、個人の実測値はここに焼き込まない。
+   初回起動時に「設定 → スタート地点」で入力するか、バックアップJSONを読み込む。 */
+const DEF_PROFILE={height:170,startDate:'',startWeight:0,startBF:0,
+  goalWeight:0,goalBF:0,goalWaist:0,goalDate:'',kcal:2200,p:140,f:60,c:250,
+  water:3000,sleep:7,sweets:200,name:''};
 /* BOXER仕様の目標値。
    ※初版は「74kg/体脂肪13%」としていたが、これは除脂肪64.4kgを要求する数字で、
      「除脂肪量は増やさない」という設計方針と矛盾していた（Codexレビューで発覚）。
@@ -635,6 +637,12 @@ if(!S.profile)S.profile=Object.assign({},DEF_PROFILE);
 if(!S.days)S.days={}; if(!S.custom)S.custom=[]; if(!S.sets)S.sets=[]; if(!S.rest)S.rest={};
 if(!S.kpi)S.kpi={};
 if(S.profile.goalWaist==null)S.profile.goalWaist=Math.round(S.profile.height*0.44*10)/10;
+/* 初回起動（またはインポート前）に目標日が空だと、達成ラインの計算がNaNになるので補う。
+   16週プログラムに合わせて開始日＋16週を既定にする。 */
+(function(){const P=S.profile;
+ if(!P.startDate)P.startDate=fmt(new Date());
+ if(!P.goalDate){const d=new Date(P.startDate+'T00:00:00');d.setDate(d.getDate()+16*7);P.goalDate=fmt(d);}
+ if(!P.startWeight)P.needSetup=1;else delete P.needSetup;})();
 /* Day 0 シード */
 (function(){const sd=S.profile.startDate;
  if(!S.days[sd])S.days[sd]={meals:[],cardio:[]};
@@ -817,6 +825,8 @@ window.setKpi=function(k){
  S.kpi[k]={v:n,d:curDate};save();render();toast('✓ '+kp.n+' を更新');};
 window.applyBoxerGoal=function(){const P=S.profile;
  P.goalWeight=BOXER_GOAL.goalWeight;P.goalBF=BOXER_GOAL.goalBF;P.goalWaist=BOXER_GOAL.goalWaist;
+ if(!P.goalDate){const d=new Date((P.startDate||fmt(new Date()))+'T00:00:00');
+  d.setDate(d.getDate()+16*7);P.goalDate=fmt(d);}
  save();render();
  toast('目標を'+BOXER_GOAL.goalWeight+'kg／体脂肪'+BOXER_GOAL.goalBF+'%／ウエスト'+BOXER_GOAL.goalWaist+'cmに更新しました');};
 function homeTab(){
@@ -849,6 +859,13 @@ function homeTab(){
   '<span class="small">☁ '+(S.lastExport?'最終バックアップから'+Math.floor((Date.now()-S.lastExport)/86400000)+'日':'バックアップがまだ一度もありません')+'</span>'+
   '<button class="mini" onclick="shareJson()">1タップ保存</button></div></div>':'')+
  ydRow+
+ (function(){ if(!P.startWeight||!P.goalWeight)
+   return '<div class="card" style="padding:12px 14px;margin-bottom:10px;border-color:var(--accent)">'+
+    '<div class="small" style="line-height:1.8">👋 <b>まず初期設定をしましょう</b><br>'+
+    '<span class="muted">前の端末のバックアップJSONがあるなら、設定 → データ → インポート で全部戻ります。'+
+    '新しく始めるなら、設定 → スタート地点 に身長・開始日・開始体重・体脂肪率を入れてください。</span><br>'+
+    '<a class="glink" onclick="go(\'set\')">→ 設定を開く</a></div></div>';
+  return '';})()+
  (function(){ /* index.html と localStorage を共有しているので目標は自動書き換えせず、ワンタップで切り替える */
   if(P.goalWeight===BOXER_GOAL.goalWeight&&P.goalBF===BOXER_GOAL.goalBF&&P.goalWaist===BOXER_GOAL.goalWaist)return '';
   return '<div class="card" style="padding:11px 14px;margin-bottom:10px;border-color:var(--bad)">'+
@@ -1442,16 +1459,29 @@ function setTab(){
   fld('目標体脂肪%','goalBF',0.5)+fld('目標ウエストcm','goalWaist',0.5)+
   fld('摂取kcal','kcal',50)+fld('タンパク質g','p',5)+fld('脂質g','f',5)+fld('糖質g','c',10)+
   fld('水分ml','water',250)+fld('スイーツ枠kcal','sweets',50)+
- '</div><div class="xs muted" style="margin-top:8px">スタート：'+P.startDate+'　'+P.startWeight+'kg / '+P.startBF+'%</div>'+
+ '</div>'+
+ '<div class="xs muted" style="margin-top:8px">スタート：'+(P.startDate||'未設定')+'　'+P.startWeight+'kg / '+P.startBF+'%'+
+  '　<span class="glink" onclick="go(\'set\');setTimeout(function(){const e=document.getElementById(\'startcard\');if(e)e.scrollIntoView({behavior:\'smooth\'});},50)">下で変更</span></div>'+
  '<div class="xs muted" style="margin-top:8px;line-height:1.8">🥊 <b>第1目標（'+P.goalDate+'）</b> '+BOXER_GOAL.goalWeight+'kg / 体脂肪'+BOXER_GOAL.goalBF+'% / ウエスト'+BOXER_GOAL.goalWaist+'cm<br>'+
  '🥊 <b>最終目標</b> '+BOXER_FINAL.weight+'kg / 体脂肪'+BOXER_FINAL.bf+'% / ウエスト'+BOXER_FINAL.waist+'cm（ミドル級のリング体型）<br>'+
  '<span class="glink" onclick="applyBoxerGoal()">→ 第1目標をワンタップで適用</span></div></div>'+
- '<div class="card"><h3>ボクシング階級（177cmの現在地）</h3>'+
+ '<div class="card" id="startcard"><h3>スタート地点・体格</h3>'+
+  '<div class="xs muted" style="margin-bottom:9px;line-height:1.7">初回だけ入力してください。バックアップJSONを読み込む場合は不要です（インポートで上書きされます）。</div>'+
+  '<div class="grid2">'+
+  '<label class="fld">身長cm<input type="number" step="0.5" inputmode="decimal" value="'+P.height+'" onchange="setProf(\'height\',this.value)" style="width:100%"></label>'+
+  '<label class="fld">年齢<input type="number" step="1" inputmode="numeric" value="'+(P.age||'')+'" onchange="setProf(\'age\',this.value)" style="width:100%"></label>'+
+  '<label class="fld">開始日<input type="date" value="'+(P.startDate||'')+'" onchange="setProfStr(\'startDate\',this.value)" style="width:100%"></label>'+
+  '<label class="fld">開始体重kg<input type="number" step="0.1" inputmode="decimal" value="'+(P.startWeight||'')+'" onchange="setProf(\'startWeight\',this.value)" style="width:100%"></label>'+
+  '<label class="fld">開始体脂肪%<input type="number" step="0.1" inputmode="decimal" value="'+(P.startBF||'')+'" onchange="setProf(\'startBF\',this.value)" style="width:100%"></label>'+
+  '<label class="fld">名前<input type="text" value="'+esc(P.name||'')+'" onchange="setProfStr(\'name\',this.value)" style="width:100%"></label>'+
+  '</div>'+
+  '<div class="xs muted" style="margin-top:9px;line-height:1.7">このアプリは記録を<b>この端末の中だけ</b>に保存します（localStorage）。サーバーには何も送信されません。機種変更やデータ消失に備えて、設定→データ から週1回バックアップを取ってください。</div></div>'+
+ '<div class="card"><h3>ボクシング階級（身長'+P.height+'cmの現在地）</h3>'+
   '<div class="small" style="line-height:1.9">'+WEIGHT_CLASSES.map(function(c){
    const cur=classOf(latestWeight(curDate)?latestWeight(curDate).w:P.startWeight);
    const on=cur&&cur.n===c.n;
    return '<div class="row between"'+(on?' style="color:var(--accent);font-weight:800"':'')+'><span>'+(on?'▶ ':'　')+c.n+'</span><span class="num">〜'+c.kg+'kg</span></div>';}).join('')+
-  '</div><div class="xs muted" style="margin-top:8px;line-height:1.7">177cmでウェルター級(66.7kg)は骨格的に削りすぎ。プロがあの数字を作れるのは計量前の脱水があるから。狙うのは<b>S・ウェルター〜ミドル級</b>のゾーンです。</div></div>'+
+  '</div><div class="xs muted" style="margin-top:8px;line-height:1.7">'+P.height+'cmでウェルター級(66.7kg)は骨格的に削りすぎ。プロがあの数字を作れるのは計量前の脱水があるから。狙うのは<b>S・ウェルター〜ミドル級</b>のゾーンです。</div></div>'+
  '<div class="card"><h3>週次トレーナー面談</h3>'+
   '<button class="btn" onclick="weeklyReview()">直近7日のレポートをコピー</button>'+
   '<div class="xs muted" style="margin-top:8px">コピーしたらClaudeに貼り付けてください。評価・問題点・来週の指示が返ってきます。</div></div>'+
@@ -1550,7 +1580,7 @@ window.weeklyReview=function(){
  '※評価軸はボクサー体型です。体重より「ウエスト/身長比」と「除脂肪量が減っていないか」を優先して見てください。'+
  '筋肥大（サイズアップ）を勧める助言は不要です。上半身を厚くする方向の指示は避けてください。\n'+
  '※このメッセージに食事や体の写真が添付されていたら、数値に表れない食事の質（野菜・タンパク源・加工度・外食の内容）や体の変化も必ず評価に含めてください。\n\n'+
- '【プロフィール】34歳男性 177cm。開始時('+P.startDate+') '+P.startWeight+'kg/体脂肪'+P.startBF+'%。\n'+
+ '【プロフィール】'+(P.age?P.age+'歳':'')+'男性 '+P.height+'cm。開始時('+P.startDate+') '+P.startWeight+'kg/体脂肪'+P.startBF+'%。\n'+
  '【目標】'+P.goalDate+'までに'+P.goalWeight+'kg/体脂肪'+P.goalBF+'%/ウエスト'+P.goalWaist+'cm（ボクサー体型・ミドル級ゾーン）。週-0.3kgペース。\n'+
  '【設計方針】除脂肪量(約61kg)は増やさず脂肪だけ削る。4-8repを中心に部位あたり週6-8ハードセット・RIR2-3。'+
   'ボクシングジムには通わないため、技術練習ではなく「相対筋力＋走力＋低体脂肪」を作るプログラム。'+
