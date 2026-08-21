@@ -192,8 +192,8 @@ const DEF_PROFILE={height:170,startDate:'',startWeight:0,startBF:0,
        74.0kg で体脂肪17.3% ／ 70.5kg でようやく13%
    index.html と localStorage を共有しているため既存プロフィールは自動上書きせず、
    ホームのワンタップ（applyBoxerGoal）で切り替える。 */
-const BOXER_GOAL={goalWeight:74,goalBF:17,goalWaist:78};
-const BOXER_FINAL={weight:70.5,bf:13,waist:76};
+const BOXER_GOAL={goalWeight:74,goalBF:16,goalWaist:80,months:12};
+const BOXER_FINAL={weight:71,bf:13,waist:77};
 /* 16週プログラム。4週ごとにデロード（Codex提案のピリオダイゼーション） */
 const PROG_START='2026-08-24';
 const PROG_WEEKS=16;
@@ -511,8 +511,8 @@ const EXDB={
  steps:['ベンチに横向きで寝て、頭をベンチから出す','耳を肩に近づけるように頭を持ち上げる','1秒キープ','ゆっくり戻す。左右'],
  tips:['自重で十分。加重は数ヶ月かけて慎重に','首を「回す」動きは絶対にしない','前面(ネックフレクション)と同日にやる']},
 '縄跳び(3分ラウンド)':{t:'心肺・ふくらはぎ・リズム・フットワーク',sr:'6セット×3分',mode:'bw',unit:'分',prog:'sets',outdoor:1,
- steps:['3分跳ぶ → 60秒レスト を1ラウンドとする','火曜が本番セッションで4-6ラウンド、金曜は軽く3ラウンド','最初は普通の両足跳びで3分続ける','慣れたらボクサーステップ(左右交互)を混ぜる','RPE6-7（息は上がるが会話は途切れ途切れにできる）程度で'],
- tips:['1セット=1ラウンド(3分)として記録する','ラウンド数で漸進する。まず3R→4R→5R→6R','※レストは30秒ではなく60秒から。アキレス腱・足底・ふくらはぎへの反復衝撃を急に増やすのが一番の故障要因','週2回で十分。週4回に増やす必要はない','引っかかっても止まらずすぐ再開','足音を小さく。かかとを着けない','館内で縄跳び禁止のジムが多い。屋外でやる前提の種目']},
+ steps:['3分跳ぶ → 60秒レスト を1ラウンドとする','【最初の3週】2分×3ラウンドから。3分に伸ばすのはその後','慣れてきたら火曜4-6R、金曜3R','最初は普通の両足跳びで3分続ける','慣れたらボクサーステップ(左右交互)を混ぜる','RPE6-7（息は上がるが会話は途切れ途切れにできる）程度で'],
+ tips:['1セット=1ラウンド(3分)として記録する','ラウンド数で漸進する。まず3R→4R→5R→6R','※レストは30秒ではなく60秒から。アキレス腱・足底・ふくらはぎへの反復衝撃を急に増やすのが一番の故障要因','体重が重いほど1回の着地衝撃が大きい。80kg台のうちは特に慎重に増やす','すねorふくらはぎの張りが48時間以上残るなら、次回は1ラウンド減らすか歩きに替える。これは根性の問題ではなく疲労骨折の予防','週2回で十分。週4回に増やす必要はない','引っかかっても止まらずすぐ再開','足音を小さく。かかとを着けない','館内で縄跳び禁止のジムが多い。屋外でやる前提の種目']},
 'シャドーボクシング':{t:'全身・回旋・心肺・フォーム',sr:'3セット×3分',mode:'bw',unit:'分',prog:'sets',
  steps:['鏡の前で構える（右利きならオーソドックス）','ジャブ→ワンツー→フック→アッパーを反復','1分ごとにテーマを変える（1分目:足、2分目:上体、3分目:コンビネーション）','必ず打った後に構えへ戻す'],
  tips:['腕だけで打たない。足→腰→肩→拳の順に力を伝える','肘を伸ばし切らない（肘関節を痛める）','軽いダンベル(1-2kg)を持つのは肩を痛めるので非推奨','1セット=1ラウンド(3分)']},
@@ -636,6 +636,7 @@ let S=load()||{profile:Object.assign({},DEF_PROFILE),days:{},custom:[]};
 if(!S.profile)S.profile=Object.assign({},DEF_PROFILE);
 if(!S.days)S.days={}; if(!S.custom)S.custom=[]; if(!S.sets)S.sets=[]; if(!S.rest)S.rest={};
 if(!S.kpi)S.kpi={};
+if(!S.pauses)S.pauses=[];
 if(S.profile.goalWaist==null)S.profile.goalWaist=Math.round(S.profile.height*0.44*10)/10;
 /* 初回起動（またはインポート前）に目標日が空だと、達成ラインの計算がNaNになるので補う。
    16週プログラムに合わせて開始日＋16週を既定にする。 */
@@ -677,15 +678,70 @@ function leanMass(upto){const lw=latestWeight(upto);if(!lw)return null;
  const ds=Object.keys(S.days).filter(d=>d<=upto&&S.days[d].bf!=null).sort();
  if(!ds.length)return null;const bf=S.days[ds[ds.length-1]].bf;
  return Math.round(lw.w*(1-bf/100)*10)/10;}
-function goalLineAt(ds){const P=S.profile;const t0=+new Date(P.startDate),t1=+new Date(P.goalDate),t=+new Date(ds);
+/* 休止期間（体調不良・出張・繁忙期）の合計日数。
+   風邪で寝込んだ分まで「遅れ」として借金が積み上がると、復帰する気力がなくなる。
+   休んだ日はラインの時間を進めない＝負債にしない、という設計。 */
+function pausedDaysBefore(ds){const list=S.pauses||[];let n=0;const t=+new Date(ds+'T00:00:00');
+ list.forEach(function(pz){const a=+new Date(pz.from+'T00:00:00');
+  const b=pz.to?+new Date(pz.to+'T00:00:00'):t;
+  if(b<=a)return; n+=Math.max(0,(Math.min(b,t)-a))/86400000;});
+ return Math.round(n);}
+function isPaused(ds){return (S.pauses||[]).some(function(pz){return pz.from<=ds&&!pz.to;});}
+function goalLineAt(ds){const P=S.profile;const t0=+new Date(P.startDate),t1=+new Date(P.goalDate);
+ let t=+new Date(ds);
+ t-=pausedDaysBefore(ds)*86400000; /* 休止ぶんラインを後ろへずらす */
  if(t1<=t0)return P.goalWeight;const r=Math.min(1,Math.max(0,(t-t0)/(t1-t0)));
  return P.startWeight+(P.goalWeight-P.startWeight)*r;}
+window.togglePause=function(){
+ const cur=(S.pauses||[]).filter(function(pz){return !pz.to;})[0];
+ if(cur){if(!confirm('休止を終了して再開しますか？'))return;
+  cur.to=fmt(new Date());save();render();
+  const d=Math.max(1,Math.round((+new Date(cur.to)-+new Date(cur.from))/86400000));
+  toast('おかえり。'+d+'日ぶん目標ラインを後ろにずらしました');return;}
+ const why=prompt('休止の理由（体調不良／出張／繁忙期など）。空でもOK','体調不良');
+ if(why===null)return;
+ if(!S.pauses)S.pauses=[];
+ S.pauses.push({from:fmt(new Date()),to:null,why:why||''});
+ save();render();toast('休止中。この期間は「遅れ」に数えません');};
+/* 直近4週の体重トレンド（kg/週）。点が少ないときは null を返して判定しない */
+function trend4w(ds){
+ const t1=+new Date(ds+'T00:00:00'),t0=t1-28*86400000;
+ const pts=Object.keys(S.days).filter(function(d){return S.days[d].weight!=null;})
+  .map(function(d){return [+new Date(d+'T00:00:00'),S.days[d].weight];})
+  .filter(function(q){return q[0]>=t0&&q[0]<=t1;});
+ if(pts.length<6)return null;
+ const n=pts.length;let sx=0,sy=0,sxy=0,sxx=0;
+ pts.forEach(function(q){const x=(q[0]-t0)/86400000,y=q[1];sx+=x;sy+=y;sxy+=x*y;sxx+=x*x;});
+ const den=n*sxx-sx*sx; if(!den)return null;
+ return ((n*sxy-sx*sy)/den)*7; /* 1日あたり→1週あたり */}
+/* 残り期間から逆算した、必要な週あたり減量ペース */
+function weeklyNeed(){const P=S.profile;const lw=latestWeight(fmt(new Date()));
+ const w=lw?lw.w:P.startWeight;const d=daysLeft();
+ if(d<=0||w<=P.goalWeight)return 0.2;
+ return Math.max(0.1,(w-P.goalWeight)/(d/7));}
 function daysLeft(){return Math.max(0,Math.round((+new Date(S.profile.goalDate)-+new Date(fmt(new Date())))/86400000));}
 function allFoods(){return FOODS.concat(S.custom.map(m=>Object.assign({cat:'my'},m)));}
+/* 「最低ライン」＝この週は継続扱い、とみなす条件。
+   全部やった日だけを成功と数えると、飲み会1回で心が折れて全部やめてしまう。
+   床を低く、しかし明確に置く。 */
+const FLOOR={weighins:3,workouts:2};
+function weekFloorMet(anyDs){
+ const d=new Date(anyDs+'T00:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7)); /* 月曜へ */
+ let w=0,t=0;
+ for(let i=0;i<7;i++){const ds=fmt(d);const o=S.days[ds];
+  if(o){if(o.weight!=null)w++;
+   if(o.wk&&Object.keys(o.wk.logs||{}).some(function(k){return (o.wk.logs[k]||[]).some(function(s2){return s2.r||s2.w||s2.min;});}))t++;}
+  d.setDate(d.getDate()+1);}
+ return {w:w,t:t,ok:(w>=FLOOR.weighins&&t>=FLOOR.workouts)};}
+/* 最低ラインを満たした週が何週続いているか。日単位ではなく週単位で数える */
 function streak(){let n=0;const d=new Date(curDate+'T00:00:00');
- for(;;){const ds=fmt(d);const o=S.days[ds];
-  const has=o&&(o.weight!=null||o.water||(o.meals&&o.meals.length)||(o.wk&&Object.keys(o.wk.logs||{}).length));
-  if(has){n++;d.setDate(d.getDate()-1);}else break; if(n>999)break;}
+ d.setDate(d.getDate()-((d.getDay()+6)%7)); /* その週の月曜へ */
+ for(let i=0;i<200;i++){const ds=fmt(d);
+  const f=weekFloorMet(ds);
+  if(f.ok)n++;
+  else if(i>0)break;  /* 今週(i===0)はまだ途中なので未達でも切らさない */
+  if(ds<=S.profile.startDate)break;
+  d.setDate(d.getDate()-7);}
  return n;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function ma7(pts){return pts.map(function(p){const t=p[0];
@@ -747,7 +803,8 @@ function coachMsg(o,t,P){
  if(isToday&&hr>=18&&pLeft>40)return 'たんぱく質があと'+Math.round(pLeft)+'g足りません！夕食に鶏むね＋プロテインで巻き返しましょう💪';
  if(isToday&&hr>=15&&(o.water||0)<P.water/2)return '水分がまだ'+((o.water||0)/1000).toFixed(1)+'Lです。こまめに「+250ml」を押していきましょう💧';
  if(pLeft<=0)return 'たんぱく質'+P.p+'gクリア！すばらしい！この積み重ねがボクサー体型への最短ルートだ🥊';
- if(isDeload(curDate)&&BYDAY[new Date(curDate+'T00:00:00').getDay()])
+ if(isPaused(curDate))return '今は休止中。目標ラインは止めてあるから、遅れは増えていない。治すのが今の仕事だ。戻れるようになったら「休止中」をタップして再開すればいい🛌';
+  if(isDeload(curDate)&&BYDAY[new Date(curDate+'T00:00:00').getDay()])
   return '今週はデロード（WEEK '+progWeek(curDate)+'）。重量は落とさず<b>セット数を3-4割</b>減らせ。物足りないのが正解だ。ここで回復を作らないと次の3週が伸びない🌙';
  const mk=BYDAY[new Date(curDate+'T00:00:00').getDay()];
  if(mk){const done=o.wk&&o.wk.logs&&Object.keys(o.wk.logs).length;
@@ -824,9 +881,16 @@ window.setKpi=function(k){
  const n=parseFloat(v);if(isNaN(n)){toast('数字を入力してください');return;}
  S.kpi[k]={v:n,d:curDate};save();render();toast('✓ '+kp.n+' を更新');};
 window.applyBoxerGoal=function(){const P=S.profile;
+ const lw=latestWeight(fmt(new Date()));
+ if(!confirm('目標を '+BOXER_GOAL.goalWeight+'kg／体脂肪'+BOXER_GOAL.goalBF+'%／ウエスト'+BOXER_GOAL.goalWaist+'cm、期限を'+BOXER_GOAL.months+'ヶ月後に設定します。\n\n'+
+  '起点も今日の体重に引き直すので、これまでの「遅れ」はリセットされます。よろしいですか？'))return;
  P.goalWeight=BOXER_GOAL.goalWeight;P.goalBF=BOXER_GOAL.goalBF;P.goalWaist=BOXER_GOAL.goalWaist;
- if(!P.goalDate){const d=new Date((P.startDate||fmt(new Date()))+'T00:00:00');
-  d.setDate(d.getDate()+16*7);P.goalDate=fmt(d);}
+ /* 起点を今日に引き直す。過去の未達を背負ったままだと初日から赤字スタートになる */
+ if(lw){P.startDate=fmt(new Date());P.startWeight=lw.w;
+  const o=S.days[fmt(new Date())];if(o&&o.bf!=null)P.startBF=o.bf;}
+ const d=new Date((P.startDate||fmt(new Date()))+'T00:00:00');
+ d.setMonth(d.getMonth()+BOXER_GOAL.months);P.goalDate=fmt(d);
+ S.pauses=[];
  save();render();
  toast('目標を'+BOXER_GOAL.goalWeight+'kg／体脂肪'+BOXER_GOAL.goalBF+'%／ウエスト'+BOXER_GOAL.goalWaist+'cmに更新しました');};
 function homeTab(){
@@ -870,8 +934,9 @@ function homeTab(){
   if(!P.startWeight)return ''; /* 初期設定バナーを先に出す。2枚並べない */
   if(P.goalWeight===BOXER_GOAL.goalWeight&&P.goalBF===BOXER_GOAL.goalBF&&P.goalWaist===BOXER_GOAL.goalWaist)return '';
   return '<div class="card" style="padding:11px 14px;margin-bottom:10px;border-color:var(--bad)">'+
-   '<div class="small" style="line-height:1.6">🥊 '+(P.goalWeight?'目標がまだ<b>筋肥大(鈴木亮平)仕様</b>です':'目標がまだ設定されていません')+'。BOXER PROTOCOL の第1目標は '+
-   '<b>'+BOXER_GOAL.goalWeight+'kg / 体脂肪'+BOXER_GOAL.goalBF+'% / ウエスト'+BOXER_GOAL.goalWaist+'cm</b>（ミドル級ゾーン）。'+
+   '<div class="small" style="line-height:1.6">🥊 '+(P.goalWeight?'目標が<b>旧設計のまま</b>です':'目標がまだ設定されていません')+'。第1目標は '+
+   '<b>'+BOXER_GOAL.goalWeight+'kg / 体脂肪'+BOXER_GOAL.goalBF+'% / ウエスト'+BOXER_GOAL.goalWaist+'cm</b>を'+BOXER_GOAL.months+'ヶ月で。<br>'+
+   '<span class="muted">半年でやろうとすると、止まった週のぶんを取り返すのに週-0.6kgが必要になり、それがまた体調を崩す。'+BOXER_GOAL.months+'ヶ月なら週-0.25kgで足ります。</span>'+
    '<br><a class="glink" onclick="applyBoxerGoal()">→ ワンタップでBOXER仕様に切り替える</a></div></div>';})()+
  (function(){const pw=progWeek(curDate);if(pw<=0||pw>PROG_WEEKS+2)return '';
    const ph=phaseOf(pw);const dl=isDeload(curDate);
@@ -884,7 +949,7 @@ function homeTab(){
  '<div style="text-align:center;padding:4px 0 0">'+
    '<div class="row" style="justify-content:center;gap:8px">'+
      '<span class="pill gold">DAY '+dayN+'</span>'+
-     (st>1?'<span class="pill dim">🔥 '+st+'日連続</span>':'')+
+     (st>0?'<span class="pill dim">🔥 '+st+'週連続クリア</span>':'')+
    '</div>'+
    '<div class="hero" style="margin-top:4px"><input type="number" step="0.1" inputmode="decimal" placeholder="--.-" value="'+(o.weight!=null?o.weight:'')+'" onchange="setVal(\'weight\',this.value)"><span class="kg">kg</span></div>'+
    '<div class="row" style="justify-content:center;gap:6px;flex-wrap:wrap">'+
@@ -893,7 +958,14 @@ function homeTab(){
      (function(){const c=classOf(w);if(!c)return '';
        const isTarget=(c.n==='ミドル級'||c.n==='S・ウェルター級');
        return '<span class="pill '+(isTarget?'gold':'dim')+'">🥊 '+c.n+'</span>';})()+
-     '<span class="pill '+(diff<=0.2?'ok':'bad')+'">'+(diff<-0.2?'ライン先行 '+Math.abs(diff).toFixed(1):(diff<=0.2?'ライン上 ✓':'ライン遅れ +'+diff.toFixed(1)))+'</span>'+
+     (function(){ /* 1週の停滞で赤を出さない。4週の平均変化で判定する */
+       const tr=trend4w(curDate);
+       if(isPaused(curDate))return '<span class="pill dim">⏸ 休止中</span>';
+       if(tr==null)return '<span class="pill dim">4週たつと傾向が出ます</span>';
+       const need=weeklyNeed();
+       if(tr<=-need*0.7)return '<span class="pill ok">4週の傾き '+tr.toFixed(2)+'kg/週 ✓</span>';
+       if(tr<=0)return '<span class="pill dim">4週の傾き '+tr.toFixed(2)+'kg/週（目安 -'+need.toFixed(2)+'）</span>';
+       return '<span class="pill bad">4週で '+(tr>0?'+':'')+tr.toFixed(2)+'kg/週</span>';})()+
      '<span class="pill dim">残り'+daysLeft()+'日</span>'+
    '</div>'+
    '<div style="margin:8px -4px 0">'+lineChart([{pts:gl,color:'#5C564A',dash:1},{pts:ma7(wEntries),color:'#8A7B4D'},{pts:wEntries,color:'#EFCF7F',dots:1}],150)+'</div>'+
@@ -937,6 +1009,22 @@ function homeTab(){
    '<h3 style="color:var(--accent)">⚡ 今週のミッション</h3>'+
    '<div style="font-weight:700;line-height:1.7">'+esc(S.mission.text)+'</div>'+
    '<div class="xs muted" style="margin-top:5px">'+fmtShort(S.mission.setAt)+' 設定・タップで編集</div></div>':'')+
+ (function(){const f=weekFloorMet(curDate);
+   return '<div class="card"><h3>今週の最低ライン　<span class="muted xs">これだけで「継続」</span></h3>'+
+    '<div class="row between" style="margin-bottom:6px"><span class="small">体重を記録</span>'+
+     '<span class="num" style="color:'+(f.w>=FLOOR.weighins?'var(--ok)':'var(--muted)')+'">'+f.w+'<span class="xs muted">/'+FLOOR.weighins+'日</span></span></div>'+
+    '<div class="bar" style="height:6px;margin-bottom:9px"><i style="width:'+Math.min(100,f.w/FLOOR.weighins*100)+'%"></i></div>'+
+    '<div class="row between" style="margin-bottom:6px"><span class="small">トレーニング</span>'+
+     '<span class="num" style="color:'+(f.t>=FLOOR.workouts?'var(--ok)':'var(--muted)')+'">'+f.t+'<span class="xs muted">/'+FLOOR.workouts+'回</span></span></div>'+
+    '<div class="bar" style="height:6px"><i style="width:'+Math.min(100,f.t/FLOOR.workouts*100)+'%"></i></div>'+
+    '<div class="xs muted" style="margin-top:9px;line-height:1.7">'+
+     (f.ok?'✅ 今週はクリア。ここから先は全部おまけです。'
+         :'週5日できなくてもいい。<b>体重3日＋トレ2回</b>を踏めば、その週は失敗じゃありません。')+
+    '</div>'+
+    '<button class="ghost" style="width:100%;margin-top:10px'+(isPaused(curDate)?';border-color:var(--accent);color:var(--accent)':'')+'" onclick="togglePause()">'+
+     (isPaused(curDate)?'⏸ 休止中（タップで再開）':'⏸ 体調不良・出張で休む')+'</button>'+
+    '<div class="xs muted" style="margin-top:6px;line-height:1.7">休んだ日は目標ラインを進めません。風邪の1週間が「遅れ」として借金になると、戻ってくるのがつらくなるからです。</div>'+
+   '</div>';})()+
  '<button class="btn wk" onclick="go(\'train\')"><span style="letter-spacing:2px">TODAY\'S WORKOUT</span>'+
    '<span class="xs" style="font-weight:800">'+(menuKey?MENUS[menuKey].name+(wkDone?' ✓':''):'休養日')+'　→</span></button>'+
  kpiCard(w)+
