@@ -658,6 +658,7 @@ if(!S.profile)S.profile=Object.assign({},DEF_PROFILE);
 if(!S.days)S.days={}; if(!S.custom)S.custom=[]; if(!S.sets)S.sets=[]; if(!S.rest)S.rest={};
 if(!S.kpi)S.kpi={};
 if(!S.pauses)S.pauses=[];
+if(!S.exNote)S.exNote={};
 if(S.profile.goalWaist==null)S.profile.goalWaist=Math.round(S.profile.height*0.44*10)/10;
 /* 初回起動（またはインポート前）に目標日が空だと、達成ラインの計算がNaNになるので補う。
    16週プログラムに合わせて開始日＋16週を既定にする。 */
@@ -1282,6 +1283,11 @@ function trainTab(){
   (menuKey!=='rest'?'<details><summary>ウォームアップの基本</summary><div class="small muted" style="line-height:1.6;margin-top:6px">1) 縄跳び3分 or 軽い有酸素5分 → 2) 動的ストレッチ（腕回し・股関節回し・胸椎回旋・ランジウォーク） → 3) 爆発系種目（メディシンボール／ボックスジャンプ）があれば先に。神経が元気なうちにやる → 4) メインのパワー種目でWUセット2回（50%×5回、70%×3回）</div></details>':'')+
   '<button class="ghost" style="width:100%;margin-top:8px'+(S.injury?';border-color:var(--bad);color:var(--bad)':'')+'" onclick="toggleInjury()">🦴 腰痛モード'+(S.injury?'ON（'+fmtShort(S.injury.since)+'〜・タップで終了）':'（腰を痛めたらON）')+'</button>'+
   '<div class="xs muted" style="margin-top:8px;text-align:center">数値は<b style="color:var(--accent)">横スワイプ</b>で一気に変えられます（−/＋タップも従来どおり）</div>'+
+  (function(){const nt=(o.wk&&o.wk.note)||'';
+    if(nt)return '<div class="xs" style="margin-top:9px;padding:9px 10px;border:1px solid var(--accent2);border-radius:10px;'+
+      'line-height:1.7;white-space:pre-wrap;cursor:pointer" onclick="editDayNote()">'+
+      '<span style="color:var(--accent);font-weight:800">📝 今日のメモ</span>　'+esc(nt)+'<span class="muted"> ・タップで編集</span></div>';
+    return '<button class="ghost" style="width:100%;margin-top:9px" onclick="editDayNote()">📝 今日のメモ（体調・混雑・気づき）</button>';})()+
  '</div>'+
  (menuKey&&menuKey!=='rest'?exList.map(ex=>{
    const g=EXDB[ex];const sets=logs[ex]||[];const prev=prevLog(ex);
@@ -1334,6 +1340,13 @@ function trainTab(){
        [['easy','余裕 RIR3+'],['ok','丁度 RIR2'],['hard','限界 RIR0-1']].map(function(o2){
         return '<button class="chip'+(cur===o2[0]?' on':'')+'" style="padding:4px 12px;font-size:11px" onclick="setRpe(\''+ex+'\',\''+o2[0]+'\')">'+o2[1]+'</button>';}).join('')+
        '<span class="xs muted">→次回の目標に反映</span></div>';})()+
+    (function(){const nt=(S.exNote&&S.exNote[ex])||'';
+      const esc2=esc(ex).replace(/'/g,"\\'");
+      if(nt)return '<div class="xs" style="margin-top:8px;padding:8px 10px;background:var(--card2);border-radius:9px;'+
+        'line-height:1.7;white-space:pre-wrap;cursor:pointer" onclick="editExNote(\''+esc2+'\')">'+
+        '<span style="color:var(--accent);font-weight:800">📌 メモ</span>　'+esc(nt)+
+        '<span class="muted"> ・タップで編集</span></div>';
+      return '<div class="xs muted" style="margin-top:8px;text-align:right;cursor:pointer" onclick="editExNote(\''+esc2+'\')">📝 メモを追加（座席位置・足幅・可動域など、次回も残ります）</div>';})()+
     '<button class="ghost" style="margin-top:8px;width:100%" onclick="addSet(\''+ex+'\')">＋ セット追加</button>'+
    '</div>';
   }).join('')+
@@ -1556,6 +1569,49 @@ function exTarget(ex){
   return {label:top+'kgでもう1セッション（全セット'+hi+'回・RIR2以上をあと1回で重量UP）'+(p.rpe==='easy'?'・前回は余裕ありなので次で確実に上がる':'')};}
  const minR=Math.min.apply(null,p.sets.map(function(s){return parseFloat(s.r)||0;}));
  return {label:top+'kg×'+Math.min(hi,minR+1)+'回以上を全セット（'+hi+'回×'+nSets+'セットで次回重量UP）'+(p.rpe==='hard'?'・前回は限界。同重量で丁寧に':'')};}
+/* ================= メモ =================
+   2種類ある。
+   ① 種目メモ（S.exNote[種目名]）… マシンの座席位置・可動域・フォームの注意など、
+      毎回同じことを再現するための情報。次回以降ずっと表示され続ける。
+      Codexが「レッグプレス150→200kgは座席・深さ・機種が同一か確認が必要」と
+      指摘したのは、まさにこれが残っていなかったため。
+   ② その日のメモ（wk.note）… 寝不足、腰の違和感、マシン待ちなど、その日限りの状況。
+      週次レポートに載るので、数字だけでは読めない事情がトレーナー側に伝わる。 */
+window.editExNote=function(ex){
+ const cur=(S.exNote&&S.exNote[ex])||'';
+ openModal('<h3>📌 '+esc(ex)+' のメモ</h3>'+
+  '<div class="xs muted" style="line-height:1.7;margin-bottom:8px">毎回表示され続けます。マシンの座席位置、足幅、可動域、痛みの出る角度など、<b>次回も同じように再現したいこと</b>を書いてください。</div>'+
+  '<textarea id="exn" style="width:100%;height:150px;font-size:15px;line-height:1.7;padding:10px" '+
+   'placeholder="例）シート位置4／足はプレート中央・肩幅／90度まで。それ以上下げると腰が丸まる">'+esc(cur)+'</textarea>'+
+  '<div class="row" style="gap:8px;margin-top:10px">'+
+   '<button class="ghost" style="flex:1" onclick="exNotePaste()">📋 貼り付け</button>'+
+   '<button class="ghost" style="flex:1" onclick="document.getElementById(\'exn\').value=\'\'">✕ 全消し</button>'+
+  '</div>'+
+  '<button class="btn" style="width:100%;margin-top:8px" onclick="saveExNote(\''+esc(ex).replace(/'/g,"\\'")+'\')">保存</button>');
+ setTimeout(function(){const e=document.getElementById('exn');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},80);};
+window.exNotePaste=function(){const e=document.getElementById('exn');if(!e)return;
+ if(!navigator.clipboard||!navigator.clipboard.readText){toast('長押し→ペーストで入れてください');e.focus();return;}
+ navigator.clipboard.readText().then(function(t){if(t){e.value=t;toast('貼り付けました');}e.focus();},
+  function(){toast('長押し→ペーストで入れてください');e.focus();});};
+window.saveExNote=function(ex){const e=document.getElementById('exn');if(!e)return;
+ const t=e.value.trim();
+ if(!S.exNote)S.exNote={};
+ if(t)S.exNote[ex]=t; else delete S.exNote[ex];
+ save();closeModal();render();toast(t?'メモを保存しました':'メモを削除しました');};
+window.editDayNote=function(){
+ const wk=ensureWk();const cur=wk.note||'';
+ openModal('<h3>📝 '+fmtShort(curDate)+' のメモ</h3>'+
+  '<div class="xs muted" style="line-height:1.7;margin-bottom:8px">その日限りの状況を残します（寝不足、腰の違和感、マシンが混んでいた、時間がなかった等）。週次レポートに載るので、数字だけでは読めない事情が伝わります。</div>'+
+  '<textarea id="dn" style="width:100%;height:150px;font-size:15px;line-height:1.7;padding:10px" '+
+   'placeholder="例）睡眠5時間で全体的に重かった。ベンチは3セット目でRIR1まで行ってしまった">'+esc(cur)+'</textarea>'+
+  '<button class="btn" style="width:100%;margin-top:10px" onclick="saveDayNote()">保存</button>'+
+  (cur?'<button class="ghost" style="width:100%;margin-top:8px;color:var(--bad)" onclick="delDayNote()">削除</button>':''));
+ setTimeout(function(){const e=document.getElementById('dn');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},80);};
+window.saveDayNote=function(){const e=document.getElementById('dn');if(!e)return;
+ const wk=ensureWk();const t=e.value.trim();
+ if(t)wk.note=t; else delete wk.note;
+ save();closeModal();render();toast(t?'今日のメモを保存しました':'メモを消しました');};
+window.delDayNote=function(){const wk=ensureWk();delete wk.note;save();closeModal();render();toast('メモを削除しました');};
 window.setRpe=function(ex,v){const wk=ensureWk();if(!wk.rpeMap)wk.rpeMap={};
  wk.rpeMap[ex]=(wk.rpeMap[ex]===v)?null:v;saveR();};
 window.openGuide=function(ex){const g=EXDB[ex];
@@ -1768,7 +1824,8 @@ window.weeklyReview=function(){
    '｜摂取'+t.k+'kcal P'+t.p+' F'+t.f+' C'+t.c+'（スイーツ'+t.sw+'kcal）'+
    '｜食事内容：'+meals+
    '｜水分'+((o.water||0)/1000).toFixed(1)+'L｜睡眠'+(o.sleep!=null?o.sleep+'h':'未記録')+
-   '｜筋トレ：'+wk+'｜有酸素：'+cardio);
+   '｜筋トレ：'+wk+'｜有酸素：'+cardio+
+   (((o.wk&&o.wk.note)?'｜メモ：'+o.wk.note:'')));
  }
  const lw=latestWeight(curDate);const w=lw?lw.w:P.startWeight;const line=goalLineAt(curDate);
  const txt='あなたは私の専属パーソナルトレーナーです（ライザップ式：結果にコミット、厳しくも温かく）。\n'+
@@ -1801,7 +1858,9 @@ window.weeklyReview=function(){
  '【BOXER KPI】'+KPIS.map(function(kp){const r=kpiVal(kp.k);
    return kp.n+':'+(r?r.v+kp.u:'未計測')+'(目標'+kp.goal+')';}).join(' / ')+'\n'+
  '【今週のミッション】'+(S.mission&&S.mission.text?S.mission.text:'未設定')+'\n\n'+
- '【今週の記録】\n'+lines.join('\n');
+ '【今週の記録】\n'+lines.join('\n')+
+ (function(){const ks=Object.keys(S.exNote||{});if(!ks.length)return '';
+   return '\n\n【種目ごとの固定メモ（毎回の再現条件）】\n'+ks.map(function(k){return k+'：'+S.exNote[k];}).join('\n');})();
  copyText(txt);
  openModal('<h3>週次面談の準備ができました</h3>'+
   '<div class="small" style="line-height:2">'+
