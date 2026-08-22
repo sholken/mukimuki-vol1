@@ -121,7 +121,7 @@ nav button.on{color:var(--accent);}
 .delx{background:none;border:none;color:#56524A;font-size:15px;padding:2px 4px;}
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:50;display:none;align-items:flex-end;justify-content:center;}
 #modal.show{display:flex;}
-.sheet{background:#141317;border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:86vh;
+.sheet{background:#141317;border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:92vh;
   overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;}
 .sheet h3{margin:2px 0 12px;font-size:16px;font-weight:700;}
 .sheetclose{position:sticky;top:-16px;float:right;margin:-4px -4px 0 0;background:var(--card2);border:1px solid var(--line);
@@ -1007,7 +1007,7 @@ function homeTab(){
    return (tm&&curDate===fmt(new Date()))?'<div class="xs muted" style="text-align:center;margin-bottom:10px">📅 明日は会食予定（枠'+tm.kcal.toLocaleString()+'kcal）— 前日はいつも通りでOK</div>':'';})())+
  (S.mission&&S.mission.text?'<div class="card" style="border-color:var(--accent2)" onclick="editMission()">'+
    '<h3 style="color:var(--accent)">⚡ 今週のミッション</h3>'+
-   '<div style="font-weight:700;line-height:1.7">'+esc(S.mission.text)+'</div>'+
+   '<div style="font-weight:700;line-height:1.7;white-space:pre-wrap">'+esc(S.mission.text)+'</div>'+
    '<div class="xs muted" style="margin-top:5px">'+fmtShort(S.mission.setAt)+' 設定・タップで編集</div></div>':'')+
  (function(){const f=weekFloorMet(curDate);
    return '<div class="card"><h3>今週の最低ライン　<span class="muted xs">これだけで「継続」</span></h3>'+
@@ -1602,9 +1602,38 @@ window.setProf=function(k,v){const n=parseFloat(v);if(!isNaN(n))S.profile[k]=n;s
 window.applyKcal=function(k){const P=S.profile;P.kcal=k;
  P.c=Math.max(120,Math.round((k-P.p*4-P.f*9)/4/5)*5);saveR();
  toast('目標を'+k.toLocaleString()+'kcal（糖質C'+P.c+'g）に更新しました');};
+/* ミッション編集。
+   prompt() だとiPhoneで1行の狭い枠になり、長文の貼り付けと修正がつらいので、
+   広いtextareaのシートに置き換えた。貼り付け・全消し・保存をボタンで用意する。 */
 window.editMission=function(){const cur=S.mission?S.mission.text:'';
- const t=prompt('今週のミッション（週次面談でのClaudeの指示を貼ると、1週間ホームに表示されます）',cur);
- if(t===null)return;S.mission=t.trim()?{text:t.trim(),setAt:curDate}:null;saveR();};
+ openModal('<h3>今週のミッション</h3>'+
+  '<div class="xs muted" style="line-height:1.7;margin-bottom:8px">週次面談でClaudeが返した指示を、そのまま貼り付けてください。1週間ホームに表示されます。</div>'+
+  '<textarea id="mtxt" style="width:100%;height:190px;font-size:15px;line-height:1.7;padding:10px" '+
+   'placeholder="例）食事を7日間、全部記録する。食べる内容は変えなくていい。">'+esc(cur)+'</textarea>'+
+  '<div class="row" style="gap:8px;margin-top:10px">'+
+   '<button class="ghost" style="flex:1" onclick="missionPaste()">📋 貼り付け</button>'+
+   '<button class="ghost" style="flex:1" onclick="missionClear()">✕ 全消し</button>'+
+  '</div>'+
+  '<button class="btn" style="width:100%;margin-top:8px" onclick="missionSave()">保存</button>'+
+  (cur?'<button class="ghost" style="width:100%;margin-top:8px;color:var(--bad)" onclick="missionDelete()">ミッションを削除</button>':'')+
+  '<div class="xs muted" style="margin-top:10px;line-height:1.7">「貼り付け」が効かない場合は、テキスト欄を長押し →「ペースト」でも入ります。</div>');
+ setTimeout(function(){const e=document.getElementById('mtxt');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},80);};
+window.missionPaste=function(){
+ const e=document.getElementById('mtxt');if(!e)return;
+ if(!navigator.clipboard||!navigator.clipboard.readText){
+  toast('この端末では自動貼り付けが使えません。長押し→ペーストで入れてください');e.focus();return;}
+ navigator.clipboard.readText().then(function(t){
+  if(!t){toast('クリップボードが空です');return;}
+  e.value=t;e.focus();toast('貼り付けました');
+ },function(){toast('貼り付けを許可できませんでした。長押し→ペーストで入れてください');e.focus();});};
+window.missionClear=function(){const e=document.getElementById('mtxt');if(!e)return;
+ e.value='';e.focus();};
+window.missionSave=function(){const e=document.getElementById('mtxt');if(!e)return;
+ const t=e.value.trim();
+ S.mission=t?{text:t,setAt:curDate}:null;
+ save();closeModal();render();toast(t?'今週のミッションを設定しました':'ミッションを空にしました');};
+window.missionDelete=function(){if(!confirm('今週のミッションを削除しますか？'))return;
+ S.mission=null;save();closeModal();render();toast('ミッションを削除しました');};
 window.setProfStr=function(k,v){if(v)S.profile[k]=v;saveR();};
 window.exportJson=function(){const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
