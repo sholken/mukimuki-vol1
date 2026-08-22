@@ -202,11 +202,45 @@ const PROG_START='2026-08-24';
    火12-18分＋金9分は急すぎる。秒数で刻んで12週かけて3分ラウンドへ持っていく。
    [火の秒数, 火のセット数, 金の秒数, 金のセット数] / 金なしは0 */
 const ROPE_RAMP={
- 1:[30,6,0,0], 2:[45,6,0,0], 3:[60,6,30,4], 4:[45,6,0,0],
- 5:[75,6,45,4], 6:[90,6,60,4], 7:[120,5,60,5], 8:[60,6,0,0],
- 9:[180,3,90,4], 10:[180,4,90,4], 11:[180,4,120,4], 12:[180,3,0,0]};
+ 1:[30,6,0,0],  2:[45,6,0,0],  3:[60,6,30,4], 4:[45,6,0,0],
+ 5:[60,6,45,4], 6:[75,6,60,4], 7:[90,6,60,5], 8:[60,6,0,0],
+ 9:[90,5,60,4], 10:[120,4,90,4],11:[150,4,120,4],12:[90,4,60,4],
+ 13:[180,4,90,4],14:[180,4,120,4],15:[180,4,120,4],16:[90,4,0,0]};
+/* 谷明けの再導入を緩やかに：週8(360秒)→週9は900秒ではなく720秒、
+   週12(540秒)→週13も直前ピークを超えない。13-16週も定義して16週周期と揃える。
+   4週・12週＝衝撃負荷だけを落とす週／8週・16週＝筋力も含む全身デロード。 */
+const IMPACT_DELOAD=[4,12];
+/* 縄跳びの処方は段階表が唯一の正。メニューの静的な「6セット×180秒」は使わない。
+   その日の指定が0なら、種目自体をメニューから外す（残すと固定値で跳んでしまう）。 */
+/* 監査#2「12か月仕様になっていない」への対応。
+   続かない原因は根性ではなく、時間がない日・雨の日・病み上がりの日に
+   「全部やるか、全部やらないか」の二択しかないこと。逃げ道を用意する。 */
+const SHORT_KEEP={uA:['ベンチプレス','チェストサポートDBロウ','レッグプレス'],
+                  uB:['ルーマニアンデッドリフト','懸垂','インクラインダンベルプレス']};
+const RAIN_ALT={'縄跳び(3分ラウンド)':'インクラインウォーク','早歩き・軽いジョグ':'インクラインウォーク'};
+function returnRamp(ds){
+ const list=(S.pauses||[]).filter(function(pz){return pz.to;});
+ if(!list.length)return null;
+ const last=list[list.length-1];
+ const days=Math.round((+new Date(last.to)-+new Date(last.from))/86400000);
+ const since=Math.round((+new Date(ds)-+new Date(last.to))/86400000);
+ if(days<7||since<0||since>7)return null;
+ return {days:days,since:since};}
+window.toggleShort=function(){S.shortDay=(S.shortDay===curDate)?null:curDate;saveR();
+ toast(S.shortDay?'短縮版に切り替えました（主要3種目のみ）':'通常版に戻しました');};
+window.toggleRain=function(){S.rainDay=(S.rainDay===curDate)?null:curDate;saveR();
+ toast(S.rainDay?'雨天モード：屋外種目をジム内種目に置き換えます':'屋外に戻しました');};
+function menuExFor(key,ds){
+ let base=(MENUS[key]&&MENUS[key].ex)?MENUS[key].ex.slice():[];
+ base=base.filter(function(ex){
+  if(ex!=='縄跳び(3分ラウンド)')return true;
+  return !!ropeFor(ds,new Date(ds+'T00:00:00').getDay()===5);});
+ if(S.rainDay===ds)base=base.map(function(ex){return RAIN_ALT[ex]||ex;})
+   .filter(function(ex,i,a){return a.indexOf(ex)===i;});
+ if(S.shortDay===ds&&SHORT_KEEP[key])base=base.filter(function(ex){return SHORT_KEEP[key].indexOf(ex)>=0;});
+ return base;}
 function ropeFor(ds,isFriday){
- const w=Math.max(1,Math.min(12,progWeek(ds)||1));
+ const w=Math.max(1,Math.min(16,progWeek(ds)||1));  /* 16週まで定義済み */
  const r=ROPE_RAMP[w]; if(!r)return null;
  const sec=isFriday?r[2]:r[0], n=isFriday?r[3]:r[1];
  if(!sec||!n)return null;
@@ -224,6 +258,9 @@ function phaseOf(w){
  if(w===8)return {n:'デロード',d:'セット数40-50%減・重量10%減・RIR4。ここで回復を作る'};
  if(w<=15)return {n:'第3期 強度',d:'主種目4-6回。縄跳びは3分ラウンドへ'};
  if(w===16)return {n:'デロード＆再評価',d:'セット数半分。体重・ウエスト・筋力を測り直して次の16週を組む'};
+ if(w<=18)return {n:'再校正',d:'16週の結果をClaudeに渡して次のブロックを組む。開始重量を測り直す期間'};
+ const blk=Math.floor((w-1)/16)+1;
+ return {n:'ブロック'+blk+'（通算'+w+'週）',d:'12ヶ月＝約52週。同じ16週サイクルを繰り返す。今は'+blk+'周目'};
  return {n:'プログラム終了',d:'再評価して次の16週を組む'};}
 /* ボクシング階級（プロ・リミット体重kg） */
 const WEIGHT_CLASSES=[
@@ -437,9 +474,9 @@ const FOOD_CATS=[['conv','コンビニ'],['staple','主食'],['cook','自炊'],[
 const MENUS={
  uA:{name:'月 全身筋力A',ex:['ベンチプレス','チェストサポートDBロウ','レッグプレス','シーテッドレッグカール','パロフプレス']},
  dA:{name:'火 縄跳び＋速歩（屋外）',ex:['縄跳び(3分ラウンド)','早歩き・軽いジョグ','デッドバグ','サイドプランク']},
- uB:{name:'木 全身筋力B',ex:['ルーマニアンデッドリフト','懸垂','インクラインダンベルプレス','ブルガリアンスクワット','フェイスプル','サイドレイズ','カーフレイズ(座位)']},
+ uB:{name:'木 全身筋力B',ex:['ルーマニアンデッドリフト','懸垂','インクラインダンベルプレス','ブルガリアンスクワット','サイドレイズ']},
  dB:{name:'金 速歩＋縄跳び（屋外）',ex:['早歩き・軽いジョグ','縄跳び(3分ラウンド)','モビリティ・ストレッチ']},
- core:{name:'土 バイクインターバル',ex:['バイクインターバル','モビリティ・ストレッチ']},
+ core:{name:'土 バイクインターバル',ex:['バイクインターバル','カーフレイズ(座位)','フェイスプル','モビリティ・ストレッチ']},
  rest:{name:'レスト（休養）',ex:[]},
 };
 /* 初版に入れていたが v2 で外した種目とその理由。ガイドに表示する */
@@ -495,7 +532,7 @@ const EXDB={
 'インクライン爆発的プッシュアップ':{t:'胸・三頭の爆発力（RFD）',sr:'3セット×3-5回',mode:'bw',unit:'回',
  steps:['公園の手すりやベンチなど、安定した高い支持物に手をつく','体を一直線に保つ','ゆっくり下ろし、押すときは手が離れるくらい爆発的に','着地は肘を柔らかく'],
  tips:['メディシンボールがなくても爆発的な押しが再現できる','支持物が高いほど簡単。最初は高めから','腰が落ちたら腹圧が抜けている合図','速度が落ちたら終了。回数は増やさない']},
-'バイクインターバル':{t:'心肺（VO2max域）・衝撃なし',sr:'4セット×2分',mode:'bw',unit:'分',prog:'sets',
+'バイクインターバル':{t:'心肺（VO2max域）・衝撃なし',sr:'4セット×2分',mode:'bw',unit:'分',prog:'sets',start:'RPE7-8',startWhy:'全力ではない。4-6本すべてで同じ出力を保てる強度。最後の1本が明らかに落ちるなら強すぎる',
  steps:['固定式バイクで10分ウォームアップ（RPE3）','2分間 RPE8（会話できないが全力ではない）','2分間 軽く漕ぐ','これを4-6本','低強度15分＋クールダウン5分'],
  tips:['1セット=1本(2分)として記録する','※v2ではランニングインターバルだったが、縄跳び・ランで週3回の着地衝撃になるためバイクへ変更（Codex監査）','縄跳びを2日やって翌日に症状が出ない状態を8週間確認できたら、ランに切り替えてよい','本数と強度を同時に増やさない。まず4本→5本→6本','ここは週で唯一「追い込んでいい」枠']},
 'シーテッドレッグカール':{t:'ハムストリング（腰に負担をかけずに後面を維持）',sr:'3セット×8-10回',start:'37.5kg',startWhy:'40kg×12は1セットのみ。複数セット用に保守的に',
@@ -730,17 +767,31 @@ window.togglePause=function(){
    0〜1000kcal の日は「少なく食べた日」ではなく【未完了ログ】として扱う。
    これを低摂取として平均に混ぜると、実態より節制しているように見えてしまう。 */
 const INCOMPLETE_KCAL=1000;
+/* 監査#2で、Codexが自分の前回提案を撤回した箇所。
+   「1000kcal未満を自動で除外」は誤り。本当に少食だった日もあるし、
+   逆に1100kcalまで入れて夕食を忘れた日はすり抜けてしまう。
+   閾値ではなく【本人の明示的な完了操作】で判定する。
+     full    … 本人が「記録完了」を押した日（カロリーの多寡を問わない）
+     check   … 何か入っているが未確認。1000kcal未満なら特に要確認
+     none    … 何も入っていない */
 function logState(ds){const o=S.days[ds];if(!o)return 'none';
  const k=dayTotals(ds).k;
+ if(o.logDone)return 'full';
  if(k<=0)return 'none';
- return k<INCOMPLETE_KCAL?'partial':'full';}
-/* 完全記録率：直近n日のうち、1000kcal以上を記録できた日の割合 */
+ return 'check';}
+function needsCheck(ds){const o=S.days[ds];if(!o||o.logDone)return false;
+ return dayTotals(ds).k>0&&dayTotals(ds).k<INCOMPLETE_KCAL;}
+/* 完全記録率：直近n日のうち、本人が「記録完了」を押した日の割合 */
 function logRate(ds,n){
  const d=new Date(ds+'T00:00:00');let full=0,tot=0;
  for(let i=0;i<n;i++){const k=fmt(d);
-  if(k>=S.profile.startDate){tot++;if(logState(k)==='full')full++;}
+  if(k>=S.profile.startDate&&k<=fmt(new Date())){tot++;if(logState(k)==='full')full++;}
   d.setDate(d.getDate()-1);}
  return tot?{full:full,tot:tot,pct:Math.round(full/tot*100)}:null;}
+window.toggleLogDone=function(){const o=D(curDate);
+ o.logDone=o.logDone?0:1;
+ if(!o.logDone)delete o.logDone;
+ saveR();toast(o.logDone?'✓ この日の記録を「完了」にしました':'完了を取り消しました');};
 /* 直近4週の体重トレンド（kg/週）。点が少ないときは null を返して判定しない */
 function trend4w(ds){
  const t1=+new Date(ds+'T00:00:00'),t0=t1-28*86400000;
@@ -762,15 +813,21 @@ function allFoods(){return FOODS.concat(S.custom.map(m=>Object.assign({cat:'my'}
 /* 「最低ライン」＝この週は継続扱い、とみなす条件。
    全部やった日だけを成功と数えると、飲み会1回で心が折れて全部やめてしまう。
    床を低く、しかし明確に置く。 */
-const FLOOR={weighins:3,workouts:2};
+/* 監査#2の指摘：「何でもトレ2回」では歩行2回でクリアになってしまい、
+   除脂肪維持という目的と一致しない。筋力AとBを各1回に変更する。 */
+const FLOOR={weighins:3,strengthDays:['uA','uB']};
 function weekFloorMet(anyDs){
  const d=new Date(anyDs+'T00:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7)); /* 月曜へ */
- let w=0,t=0;
+ let w=0;const done={};
  for(let i=0;i<7;i++){const ds=fmt(d);const o=S.days[ds];
   if(o){if(o.weight!=null)w++;
-   if(o.wk&&Object.keys(o.wk.logs||{}).some(function(k){return (o.wk.logs[k]||[]).some(function(s2){return s2.r||s2.w||s2.min;});}))t++;}
+   if(o.wk&&Object.keys(o.wk.logs||{}).some(function(k){return (o.wk.logs[k]||[]).some(function(s2){return s2.r||s2.w||s2.min;});})){
+    const mk=o.wk.menu||BYDAY[new Date(ds+'T00:00:00').getDay()];
+    if(FLOOR.strengthDays.indexOf(mk)>=0)done[mk]=1;}}
   d.setDate(d.getDate()+1);}
- return {w:w,t:t,ok:(w>=FLOOR.weighins&&t>=FLOOR.workouts)};}
+ const t=Object.keys(done).length;
+ return {w:w,t:t,ok:(w>=FLOOR.weighins&&t>=FLOOR.strengthDays.length),
+  which:FLOOR.strengthDays.map(function(k){return {k:k,n:MENUS[k].name,done:!!done[k]};})};}
 /* 最低ラインを満たした週が何週続いているか。日単位ではなく週単位で数える */
 function streak(){let n=0;const d=new Date(curDate+'T00:00:00');
  d.setDate(d.getDate()-((d.getDay()+6)%7)); /* その週の月曜へ */
@@ -830,7 +887,7 @@ function coachMsg(o,t,P){
  if(t.sw>P.sweets)return 'スイーツ枠を'+(t.sw-P.sweets)+'kcal超えました🍰 今日はここでストップ！明日は枠内で楽しみましょう';
  const lwc=latestWeight(curDate);const wNow=lwc?lwc.w:P.startWeight;
  const sugg=Math.round((wNow*32.6-450)/50)*50;
- if(P.kcal-sugg>=100)return '体重が落ちて維持カロリーも下がってきたぞ。摂取目標を'+P.kcal.toLocaleString()+'→'+sugg.toLocaleString()+'kcalに締め直そう。<br><a class="glink" onclick="applyKcal('+sugg+')">→ ワンタップで更新する</a>';
+ /* 旧・体重連動のkcal提案は、完全記録率を見ないため撤去（kcalAdviceに一本化） */
  /* ボクサー設計のチェック：測った日だけ、ウエスト身長比の達成/未達を返す */
  if(o.waist!=null){const rt=o.waist/P.height;
   if(rt<=0.44)return 'ウエスト身長比 '+rt.toFixed(3)+' ！0.44を切った🥊 これがボクサー体型のラインだ。体重の数字より、この一点を守り続けろ。';
@@ -918,6 +975,21 @@ window.setKpi=function(k){
  if(v===''){delete S.kpi[k];save();render();return;}
  const n=parseFloat(v);if(isNaN(n)){toast('数字を入力してください');return;}
  S.kpi[k]={v:n,d:curDate};save();render();toast('✓ '+kp.n+' を更新');};
+/* 監査#2：2250kcalは固定値ではなく、完全記録率と4週トレンドで調整する。
+   ただし記録が足りないうちは絶対に動かさない（動かしても意味がないため）。 */
+function kcalAdvice(){
+ const P=S.profile,lr=logRate(curDate,21),tr=trend4w(curDate);
+ if(!lr||lr.pct<90)
+  return {t:'hold',m:'まず記録から。直近3週の完全記録率が'+(lr?lr.pct:0)+'%です。<b>90%を3週続けるまで、摂取カロリーは動かしません。</b>記録が不完全なまま数字をいじっても、何が効いたか分からなくなります。'};
+ if(tr==null)return {t:'hold',m:'記録は十分です。4週分の体重データが溜まったら判断します。'};
+ if(tr>-0.15)
+  return {t:'down',v:Math.max(1800,P.kcal-150),m:'完全記録率'+lr.pct+'%で、4週トレンドが'+tr.toFixed(2)+'kg/週。ほぼ横ばいです。<b>摂取を150kcal下げる</b>か、歩数を+2000にする。<u>両方同時にはやらない</u>。'};
+ if(tr<-0.5)
+  return {t:'up',v:P.kcal+150,m:'4週トレンドが'+tr.toFixed(2)+'kg/週。落ちすぎです。このペースだと筋力と除脂肪が削れます。<b>摂取を150kcal上げましょう。</b>'};
+ return {t:'ok',m:'完全記録率'+lr.pct+'%、4週トレンド'+tr.toFixed(2)+'kg/週。<b>ちょうどいいペースです。何も変えないでください。</b>'};}
+window.applyKcalAdvice=function(v){S.profile.kcal=v;
+ const P=S.profile;P.p=150;P.f=Math.round((v-150*4-P.c*4)/9);
+ save();render();toast('摂取目標を'+v+'kcalに更新しました');};
 window.applyBoxerGoal=function(){const P=S.profile;
  const lw=latestWeight(fmt(new Date()));
  if(!confirm('目標を '+BOXER_GOAL.goalWeight+'kg／体脂肪'+BOXER_GOAL.goalBF+'%／ウエスト'+BOXER_GOAL.goalWaist+'cm、期限を'+BOXER_GOAL.months+'ヶ月後に設定します。\n\n'+
@@ -976,10 +1048,10 @@ function homeTab(){
    '<b>'+BOXER_GOAL.goalWeight+'kg / 体脂肪'+BOXER_GOAL.goalBF+'% / ウエスト'+BOXER_GOAL.goalWaist+'cm</b>を'+BOXER_GOAL.months+'ヶ月で。<br>'+
    '<span class="muted">半年でやろうとすると、止まった週のぶんを取り返すのに週-0.6kgが必要になり、それがまた体調を崩す。'+BOXER_GOAL.months+'ヶ月なら週-0.25kgで足ります。</span>'+
    '<br><a class="glink" onclick="applyBoxerGoal()">→ ワンタップでBOXER仕様に切り替える</a></div></div>';})()+
- (function(){const pw=progWeek(curDate);if(pw<=0||pw>PROG_WEEKS+2)return '';
+ (function(){const pw=progWeek(curDate);if(pw<=0)return '';
    const ph=phaseOf(pw);const dl=isDeload(curDate);
    return '<div class="card" style="padding:10px 14px;margin-bottom:10px'+(dl?';border-color:var(--accent2)':'')+'">'+
-    '<div class="row between"><span class="small"><b'+(dl?' style="color:var(--accent)"':'')+'>'+(dl?'🌙 ':'')+'WEEK '+pw+'/'+PROG_WEEKS+'　'+ph.n+'</b></span>'+
+    '<div class="row between"><span class="small"><b'+(dl?' style="color:var(--accent)"':'')+'>'+(dl?'🌙 ':'')+'WEEK '+pw+(pw<=PROG_WEEKS?'/'+PROG_WEEKS:'')+'　'+ph.n+'</b></span>'+
     '<span class="xs muted">〜'+P.goalDate+'</span></div>'+
     '<div class="xs muted" style="margin-top:3px;line-height:1.6">'+ph.d+'</div>'+
     (dl?'<div class="xs" style="color:var(--accent);margin-top:4px">今週はデロード。重量は落とさず<b>セット数を3-4割減らす</b>。ここで回復を作るから次の3週が伸びる</div>':'')+
@@ -1031,12 +1103,15 @@ function homeTab(){
    '<div class="row between"><span class="num" style="font-size:26px">'+t.k.toLocaleString()+'<span class="small muted">/'+P.kcal.toLocaleString()+'kcal</span></span>'+
    '<span class="xs" style="color:var(--accent);font-weight:800">残り'+Math.max(0,P.kcal-t.k).toLocaleString()+'kcal</span></div>'+
    '<div class="bar" style="margin:6px 0 4px"><i style="width:'+Math.min(100,t.k/P.kcal*100)+'%"></i></div>'+
-   (function(){const st2=logState(curDate);
-     const isToday=curDate===fmt(new Date());
-     if(st2!=='partial')return '';
-     return '<div class="xs" style="margin:6px 0;padding:8px;border:1px solid var(--bad);border-radius:9px;line-height:1.7">'+
-      '<b style="color:var(--bad)">⚠️ 未完了ログ</b>　'+t.k+'kcal は'+(isToday?'まだ入力途中のはずです。':'記録漏れの可能性が高いです。')+
-      '<br><span class="muted">油・調味料・飲み物・間食・外食が抜けていませんか。ここを埋めないと、節制できているように見えて実際は増えます。</span></div>';})()+
+   (function(){const o2=D(curDate);const st2=logState(curDate);
+     if(st2==='full')return '<div class="xs" style="margin:8px 0;padding:8px;border:1px solid var(--ok);border-radius:9px;line-height:1.7;cursor:pointer" onclick="toggleLogDone()">'+
+       '<b style="color:var(--ok)">✓ 記録完了</b>　この日は完全記録としてカウントされます<span class="muted"> ・タップで取消</span></div>';
+     if(st2==='none')return '';
+     return '<div class="xs" style="margin:8px 0;padding:9px;border:1px solid '+(needsCheck(curDate)?'var(--bad)':'var(--line)')+';border-radius:9px;line-height:1.7">'+
+      (needsCheck(curDate)
+        ?'<b style="color:var(--bad)">⚠️ 要確認</b>　'+t.k+'kcal は少なすぎます。油・調味料・飲み物・間食・外食が抜けていませんか。<br><span class="muted">本当にこれだけなら「記録完了」を押してください。押すまでは平均に含めません。</span>'
+        :'<span class="muted">入力し終えたら「記録完了」を押してください。完全記録率に反映されます。</span>')+
+      '<button class="mini" style="width:100%;margin-top:8px;padding:8px" onclick="toggleLogDone()">✓ この日の記録を完了にする</button></div>';})()+
    nrow('たんぱく質',t.p,P.p,'var(--p)','g')+nrow('脂質',t.f,P.f,'var(--f)','g')+nrow('糖質',t.c,P.c,'var(--c)','g')+
    '<div class="row between" style="margin-top:10px"><span class="xs muted">スイーツ枠 '+t.sw+'/'+P.sweets+'kcal</span><span class="xs '+(t.sw>P.sweets?'':'muted')+'" style="'+(t.sw>P.sweets?'color:var(--bad);font-weight:700':'')+'">'+(t.sw>P.sweets?'オーバー！':'OK')+'</span></div>'+
    '<div class="bar sweet" style="margin-top:4px"><i style="width:'+Math.min(100,t.sw/P.sweets*100)+'%"></i></div>'+
@@ -1060,15 +1135,16 @@ function homeTab(){
     '<div class="bar" style="height:6px;margin-bottom:9px"><i style="width:'+Math.min(100,f.w/FLOOR.weighins*100)+'%"></i></div>'+
     (function(){const lr=logRate(curDate,7);if(!lr)return '';
       const col=lr.pct>=90?'var(--ok)':(lr.pct>=60?'var(--accent)':'var(--bad)');
-      return '<div class="row between" style="margin:9px 0 6px"><span class="small">食事の完全記録率<br><span class="xs muted">1000kcal未満の日は未完了扱い</span></span>'+
+      return '<div class="row between" style="margin:9px 0 6px"><span class="small">食事の完全記録率<br><span class="xs muted">「記録完了」を押した日の割合</span></span>'+
        '<span class="num" style="color:'+col+'">'+lr.pct+'<span class="xs muted">% ('+lr.full+'/'+lr.tot+'日)</span></span></div>'+
        '<div class="bar" style="height:6px;margin-bottom:9px"><i style="width:'+lr.pct+'%"></i></div>';})()+
-    '<div class="row between" style="margin-bottom:6px"><span class="small">トレーニング</span>'+
-     '<span class="num" style="color:'+(f.t>=FLOOR.workouts?'var(--ok)':'var(--muted)')+'">'+f.t+'<span class="xs muted">/'+FLOOR.workouts+'回</span></span></div>'+
-    '<div class="bar" style="height:6px"><i style="width:'+Math.min(100,f.t/FLOOR.workouts*100)+'%"></i></div>'+
+    '<div class="row between" style="margin-bottom:6px"><span class="small">筋力トレ<br><span class="xs muted">'+
+      f.which.map(function(x){return (x.done?'✓ ':'– ')+x.n.replace(/^[月火水木金土日] /,'');}).join(' ／ ')+'</span></span>'+
+     '<span class="num" style="color:'+(f.t>=FLOOR.strengthDays.length?'var(--ok)':'var(--muted)')+'">'+f.t+'<span class="xs muted">/'+FLOOR.strengthDays.length+'回</span></span></div>'+
+    '<div class="bar" style="height:6px"><i style="width:'+Math.min(100,f.t/FLOOR.strengthDays.length*100)+'%"></i></div>'+
     '<div class="xs muted" style="margin-top:9px;line-height:1.7">'+
      (f.ok?'✅ 今週はクリア。ここから先は全部おまけです。'
-         :'週5日できなくてもいい。<b>体重3日＋トレ2回</b>を踏めば、その週は失敗じゃありません。')+
+         :'週5日できなくてもいい。<b>体重3日＋筋力A・Bを各1回</b>を踏めば、その週は失敗じゃありません。<br><span class="muted">※歩行や縄跳びだけではクリアになりません。除脂肪を守るのは筋力トレなので。</span>')+
     '</div>'+
     '<button class="ghost" style="width:100%;margin-top:10px'+(isPaused(curDate)?';border-color:var(--accent);color:var(--accent)':'')+'" onclick="togglePause()">'+
      (isPaused(curDate)?'⏸ 休止中（タップで再開）':'⏸ 体調不良・出張で休む')+'</button>'+
@@ -1077,6 +1153,12 @@ function homeTab(){
  '<button class="btn wk" onclick="go(\'train\')"><span style="letter-spacing:2px">TODAY\'S WORKOUT</span>'+
    '<span class="xs" style="font-weight:800">'+(menuKey?MENUS[menuKey].name+(wkDone?' ✓':''):'休養日')+'　→</span></button>'+
  kpiCard(w)+
+ (function(){const ad=kcalAdvice();
+   const col=ad.t==='ok'?'var(--ok)':(ad.t==='hold'?'var(--line)':'var(--accent2)');
+   return '<div class="card" style="border-color:'+col+'"><h3>摂取カロリーの見直し　<span class="muted xs">3週ごとに判断</span></h3>'+
+    '<div class="small" style="line-height:1.8">'+ad.m+'</div>'+
+    (ad.v?'<div style="margin-top:8px"><a class="glink" onclick="applyKcalAdvice('+ad.v+')">→ '+P.kcal.toLocaleString()+' → '+ad.v.toLocaleString()+'kcal に変更する</a></div>':'')+
+   '</div>';})()+
  '<div class="card"><h3>有酸素・運動</h3>'+
    (o.cardio.length?o.cardio.map((cd,i)=>'<div class="fooditem"><span>'+cd.type+'　<b class="num">'+cd.min+'分</b>　<span class="xs" style="color:var(--accent)">約'+cardioKcal(cd.type,cd.min)+'kcal消費</span></span><button class="delx" onclick="delCardio('+i+')">✕</button></div>').join(''):'<div class="muted small">記録なし</div>')+
    '<div class="row" style="margin-top:8px"><select id="cdtype"><option>縄跳び</option><option>ランニングインターバル</option><option>早歩き・軽いジョグ</option><option>インクラインウォーク</option><option>バイク</option><option>ウォーキング</option><option>水泳</option><option>シャドーボクシング</option><option>その他</option></select>'+
@@ -1271,7 +1353,7 @@ function trainTab(){
  const defKey=BYDAY[new Date(curDate+'T00:00:00').getDay()];
  const menuKey=(o.wk&&o.wk.menu)||defKey;
  const logs=(o.wk&&o.wk.logs)||{};
- const exList=menuKey?MENUS[menuKey].ex.slice():[];
+ const exList=menuKey?menuExFor(menuKey,curDate):[];
  Object.keys(logs).forEach(e=>{if(exList.indexOf(e)<0)exList.push(e);});
  let vol=0;Object.keys(logs).forEach(e=>{(logs[e]||[]).forEach(s=>{vol+=(parseFloat(s.w)||0)*(parseFloat(s.r)||0);});});
  return ''+
@@ -1280,9 +1362,41 @@ function trainTab(){
   '<div style="height:8px"></div>'+
   '<div class="chips">'+Object.keys(MENUS).map(k=>'<button class="chip '+(menuKey===k?'on':'')+'" onclick="setMenu(\''+k+'\')">'+MENUS[k].name+'</button>').join('')+'</div>'+
   (menuKey==='rest'?'<div class="muted small" style="margin-top:8px">🛌 今日はレスト日。回復も計画のうち。睡眠・タンパク質・水分を整えよう。</div>':'')+
+  (menuKey==='uA'||menuKey==='uB'?'<details><summary>初回の重量が合わなかったときの直し方</summary>'+
+   '<div class="xs muted" style="line-height:1.9;margin-top:6px">開始重量はログからの逆算値なので、外れることがあります。粘らずその場で直してください。<br>'+
+   '・1セット目で下限回数に届く前にRIR1以下（もう1回も無理）→ <b>その場で5-10%下げる</b><br>'+
+   '・上限回数をやってもRIR4以上（まだ4回いける）→ 次のセットか次回に小幅上げる<br>'+
+   '・フォームが崩れた／腰や関節が痛い → 回数の達成より<b>中止を優先</b><br>'+
+   '・懸垂で4セット×5回がRIR2以上で出せない → アシストマシンかバンドで補助し、補助量を毎週減らす'+
+   '</div></details>':'')+
+  (isDeload(curDate)?'<details open><summary style="color:var(--accent)">🌙 デロード週のやり方</summary>'+
+   '<div class="xs muted" style="line-height:1.9;margin-top:6px">'+
+   '・<b>セット数を通常の50-70%</b>（例：4セット→2セット、3セット→2セット）<br>'+
+   '・<b>重量は通常の90%</b>前後<br>'+
+   '・<b>RIR4-5</b>で止める。追い込まない<br>'+
+   '・<b>増量判定はしない</b>（この週の記録では重量を上げない）<br>'+
+   '物足りないのが正解です。ここで回復を作らないと次が伸びません。</div></details>':'')+
   (menuKey!=='rest'?'<details><summary>ウォームアップの基本</summary><div class="small muted" style="line-height:1.6;margin-top:6px">1) 縄跳び3分 or 軽い有酸素5分 → 2) 動的ストレッチ（腕回し・股関節回し・胸椎回旋・ランジウォーク） → 3) 爆発系種目（メディシンボール／ボックスジャンプ）があれば先に。神経が元気なうちにやる → 4) メインのパワー種目でWUセット2回（50%×5回、70%×3回）</div></details>':'')+
+  (menuKey!=='rest'?'<div class="row" style="gap:8px;margin-top:8px">'+
+   '<button class="ghost" style="flex:1'+(S.shortDay===curDate?';border-color:var(--accent);color:var(--accent)':'')+'" onclick="toggleShort()">⏱ 30分版</button>'+
+   ((menuKey==='dA'||menuKey==='dB')?'<button class="ghost" style="flex:1'+(S.rainDay===curDate?';border-color:var(--accent);color:var(--accent)':'')+'" onclick="toggleRain()">☔ 雨天</button>':'')+
+   '</div>':'')+
+  (S.shortDay===curDate?'<div class="xs muted" style="margin-top:6px;line-height:1.7">主要3種目だけに絞っています。<b>30分でも来た日は「やった日」</b>です。ゼロとは違います。</div>':'')+
+  (S.rainDay===curDate?'<div class="xs muted" style="margin-top:6px;line-height:1.7">屋外種目をインクラインウォークに置き換えました。傾斜10-12%・40分でRPE3-4。</div>':'')+
+  (function(){const rr=returnRamp(curDate);if(!rr)return '';
+    return '<div class="xs" style="margin-top:8px;padding:9px;border:1px solid var(--accent2);border-radius:10px;line-height:1.8">'+
+     '🔄 <b style="color:var(--accent)">復帰ウィーク</b>（'+rr.days+'日休んだあと'+rr.since+'日目）<br>'+
+     '<span class="muted">いきなり元の重量に戻さないでください。今週は<b>重量80%・セット数は通常の2/3・RIR4</b>。'+
+     '縄跳びは休止前の週の半分から。1週かけて戻せば、そのあとは元どおり伸びます。</span></div>';})()+
   '<button class="ghost" style="width:100%;margin-top:8px'+(S.injury?';border-color:var(--bad);color:var(--bad)':'')+'" onclick="toggleInjury()">🦴 腰痛モード'+(S.injury?'ON（'+fmtShort(S.injury.since)+'〜・タップで終了）':'（腰を痛めたらON）')+'</button>'+
   '<div class="xs muted" style="margin-top:8px;text-align:center">数値は<b style="color:var(--accent)">横スワイプ</b>で一気に変えられます（−/＋タップも従来どおり）</div>'+
+  (menuKey==='dB'||menuKey==='core'?'<details style="margin-top:9px"><summary class="xs" style="color:var(--accent)">⚠️ 今日を下げる条件（木曜の脚トレから連続しています）</summary>'+
+   '<div class="xs muted" style="line-height:1.8;margin-top:6px">'+
+   (menuKey==='dB'
+    ?'・脚の張りが軽い → 予定どおり<br>・歩行や階段で違和感、アキレス腱/足底/すねに局所痛 → <b>縄跳びは中止して速歩だけ</b><br>・全身がだるい → 速歩を20分に短縮'
+    :'・木金の疲労が残っている → インターバルをやめ、<b>軽い一定ペース20-30分</b>に<br>・脚に張りがある → 抵抗を下げて回転数で回す<br>・元気なら予定どおり RPE7-8 で')+
+   '<br>・<b style="color:var(--bad)">鋭い痛み・腰から脚への放散痛・しびれ・力が入らない → 中止して医療機関か理学療法士へ</b>'+
+   '</div></details>':'')+
   (function(){const nt=(o.wk&&o.wk.note)||'';
     if(nt)return '<div class="xs" style="margin-top:9px;padding:9px 10px;border:1px solid var(--accent2);border-radius:10px;'+
       'line-height:1.7;white-space:pre-wrap;cursor:pointer" onclick="editDayNote()">'+
@@ -1293,7 +1407,10 @@ function trainTab(){
    const g=EXDB[ex];const sets=logs[ex]||[];const prev=prevLog(ex);
    return '<div class="excard">'+
     '<div class="row between"><span class="exname" onclick="openGuide(\''+ex+'\')">'+ex+(exIsDb(ex)?' <span class="xs" style="color:var(--muted);font-weight:600">片手</span>':'')+' ⓘ</span>'+
-    '<span class="xs muted">'+(g?g.sr:'')+'</span></div>'+
+    '<span class="xs muted">'+(function(){
+      if(ex==='縄跳び(3分ラウンド)'){const rp=ropeFor(curDate,new Date(curDate+'T00:00:00').getDay()===5);
+       return rp?rp.label:'今日はなし';}
+      return g?g.sr:'';})()+'</span></div>'+
     (g?'<div class="xs muted">'+g.t+'</div>':'')+
     (prev?'<div class="xs" style="color:var(--f);margin-top:4px">前回('+fmtShort(prev.d)+')：'+prev.txt+'</div>':'<div class="xs muted" style="margin-top:4px">前回記録なし — 今日が基準になります</div>')+
     (function(){if(!(S.injury&&g&&g.spine))return '';
@@ -1480,14 +1597,23 @@ const BIGLIFT=['フロアプレス','加重懸垂(パラレル)','トラップ�
 const COMPOUND=['ディップス','片手ダンベルショルダープレス','ワンハンドロウ','ブルガリアンスクワット','ヒップスラスト','ケーブル・ローテーショナルチョップ'];
 const ALT_EX={'懸垂':'ニュートラルグリップ・ラットプルダウン','トラップバーデッドリフト':'ヒップスラスト','ルーマニアンデッドリフト':'レッグカール','ヒップスラスト':'レッグカール','アブローラー':'デッドバグ','バーベルスクワット':'レッグプレス'};
 /* パワー種目は神経系のトレなのでセット間を長く、ラウンド種目は短く */
-const BOXER_REST={'縄跳び(3分ラウンド)':60,'シャドーボクシング':60,'HIIT(20秒×8)':10,
- 'メディシンボール・チェストパス':60,'ボックスジャンプ':15,'フロアプレス':240,
- '加重懸垂(パラレル)':240,'トラップバーデッドリフト':240,'ネックフレクション':45,
- 'ネックサイドフレクション':45,'片脚バランス・ステップワーク':30,'モビリティ・ストレッチ':0,
- 'カウンタームーブメントジャンプ':90,'インクライン爆発的プッシュアップ':90,
- 'ランニングインターバル':120,'バイクインターバル':120,'早歩き・軽いジョグ':0,
- 'ルーマニアンデッドリフト':180,'サイドレイズ':60,'シーテッドレッグカール':90,
- 'ニュートラルグリップ・ラットプルダウン':150,'懸垂':180,'チェストサポートDBロウ':120,'スミス・ヒップスラスト':120};
+const BOXER_REST={
+ /* 監査#2の指摘：「既定90秒」ではRIRではなく息切れで回数が落ちる。全種目を明示する。 */
+ 'ベンチプレス':180,'レッグプレス':180,'ルーマニアンデッドリフト':180,'懸垂':180,
+ 'チェストサポートDBロウ':150,'インクラインダンベルプレス':150,
+ 'ブルガリアンスクワット':150,   /* 左右を終えてから150秒 */
+ 'シーテッドレッグカール':105,
+ 'フェイスプル':75,'サイドレイズ':75,'カーフレイズ(座位)':75,'カーフレイズ(立位)':75,
+ 'パロフプレス':60,'デッドバグ':45,'サイドプランク':45,
+ '縄跳び(3分ラウンド)':60,'バイクインターバル':120,
+ '早歩き・軽いジョグ':0,'モビリティ・ストレッチ':0,
+ /* v3のメニュー外だが記録互換のため残している種目 */
+ 'シャドーボクシング':60,'HIIT(20秒×8)':10,'メディシンボール・チェストパス':60,
+ 'ボックスジャンプ':15,'フロアプレス':240,'加重懸垂(パラレル)':240,
+ 'トラップバーデッドリフト':240,'ネックフレクション':45,'ネックサイドフレクション':45,
+ '片脚バランス・ステップワーク':30,'カウンタームーブメントジャンプ':90,
+ 'インクライン爆発的プッシュアップ':90,'ランニングインターバル':120,
+ 'ニュートラルグリップ・ラットプルダウン':150,'スミス・ヒップスラスト':120};
 window.toggleInjury=function(){
  if(S.injury){if(!confirm('腰痛モードを終了しますか？（痛みが完全に消えてから）'))return;
   S.injury=null;toast('腰痛モード終了。復帰はゆっくりと💪');}
@@ -1557,6 +1683,7 @@ function exTarget(ex){
    return {label:'前回'+p.sets.length+'セット×'+minR0+'回。あと'+(nSets-p.sets.length)+'セット増やして'+nSets+'セットにする（達成で加重スタート）'};
   return {label:'全セット'+Math.min(hi,minR0+1)+'回以上を狙う（'+hi+'回×'+nSets+'セットで加重スタート）'};}
  const everyHi=p.sets.length>=nSets&&p.sets.every(function(s){return (parseFloat(s.r)||0)>=hi;});
+ if(isDeload(curDate))return {label:'デロード週：'+top+'kgのまま、セット数を半分・RIR4-5で。増量判定はしない'};
  if(everyHi&&p.rpe!=='hard'){
   /* Codexレビュー反映：1回クリアしただけでは上げない。
      同じ重量で「全セット上限×RIR2以上」を2セッション連続で達成してから増やす。
@@ -1833,7 +1960,7 @@ window.weeklyReview=function(){
  '1. 今週の評価（100点満点と一言）\n2. 良かった点\n3. 問題点とその原因分析\n'+
  '4. 来週の具体的な指示（食事・トレーニング・生活で各1つ以上、数値で）\n5. 停滞している場合の打ち手\n'+
  '※評価軸はボクサー体型です。体重より「ウエスト/身長比」と「除脂肪量が減っていないか」を優先して見てください。'+
- '※1000kcal未満の日は記録漏れです。摂取量として平均に含めないでください。'+
+ '※「未確認の日」は記録が完結していません。摂取量の平均に含めないでください。'+
  '※毎週見るのは「体重7日平均・ウエスト・完全記録率・筋トレ完遂率」の4つだけにしてください。'+
  '※摂取カロリーの変更提案は、完全記録率90%以上が3週続いてからにしてください。'+
  '筋肥大（サイズアップ）を勧める助言は不要です。上半身を厚くする方向の指示は避けてください。\n'+
@@ -1852,9 +1979,9 @@ window.weeklyReview=function(){
     (lwa?'　ウエスト'+lwa.w+'cm(身長比'+(lwa.w/P.height).toFixed(3)+')':'');})()+'\n'+
  '【記録の完全性】'+(function(){const lr=logRate(curDate,7);
    const inc=[];const d=new Date(curDate+'T00:00:00');
-   for(let i=0;i<7;i++){const k=fmt(d);if(logState(k)==='partial')inc.push(fmtShort(k)+'('+dayTotals(k).k+'kcal)');d.setDate(d.getDate()-1);}
-   return (lr?'完全記録率 '+lr.pct+'%（'+lr.full+'/'+lr.tot+'日）':'')+
-    (inc.length?'　※未完了ログ: '+inc.join('、')+' — これらは「少食」ではなく記録漏れとして扱ってください':'');})()+'\n'+
+   for(let i=0;i<7;i++){const k=fmt(d);if(logState(k)!=='full'&&dayTotals(k).k>0)inc.push(fmtShort(k)+'('+dayTotals(k).k+'kcal'+(needsCheck(k)?'・要確認':'')+')');d.setDate(d.getDate()-1);}
+   return (lr?'完全記録率 '+lr.pct+'%（'+lr.full+'/'+lr.tot+'日が本人確認済み）':'')+
+    (inc.length?'　※未確認の日: '+inc.join('、')+' — 本人が完了を押していません。摂取量の平均に含めないでください':'');})()+'\n'+
  '【BOXER KPI】'+KPIS.map(function(kp){const r=kpiVal(kp.k);
    return kp.n+':'+(r?r.v+kp.u:'未計測')+'(目標'+kp.goal+')';}).join(' / ')+'\n'+
  '【今週のミッション】'+(S.mission&&S.mission.text?S.mission.text:'未設定')+'\n\n'+
