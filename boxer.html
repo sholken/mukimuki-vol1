@@ -183,7 +183,7 @@ const LS='mukimuki_v1';
 /* GitHub Pages で公開するため、個人の実測値はここに焼き込まない。
    初回起動時に「設定 → スタート地点」で入力するか、バックアップJSONを読み込む。 */
 const DEF_PROFILE={height:170,startDate:'',startWeight:0,startBF:0,
-  goalWeight:0,goalBF:0,goalWaist:0,goalDate:'',kcal:2200,p:140,f:60,c:250,
+  goalWeight:0,goalBF:0,goalWaist:0,goalDate:'',kcal:2250,p:150,f:70,c:255,
   water:3000,sleep:7,sweets:200,name:''};
 /* BOXER仕様の目標値。
    ※初版は「74kg/体脂肪13%」としていたが、これは除脂肪64.4kgを要求する数字で、
@@ -193,24 +193,37 @@ const DEF_PROFILE={height:170,startDate:'',startWeight:0,startBF:0,
    index.html と localStorage を共有しているため既存プロフィールは自動上書きせず、
    ホームのワンタップ（applyBoxerGoal）で切り替える。 */
 const BOXER_GOAL={goalWeight:74,goalBF:16,goalWaist:80,months:12};
+/* P150g=600 + F70g=630 + C255g=1020 = 2250kcal（旧 F60/C270 は2220kcalで表示と不一致だった） */
+const BOXER_MACRO={kcal:2250,p:150,f:70,c:255};
 const BOXER_FINAL={weight:71,bf:13,waist:77};
 /* 16週プログラム。4週ごとにデロード（Codex提案のピリオダイゼーション） */
 const PROG_START='2026-08-24';
+/* 縄跳びの段階導入表（Codex監査）。84kgで初日9分跳んで張りが出たので、
+   火12-18分＋金9分は急すぎる。秒数で刻んで12週かけて3分ラウンドへ持っていく。
+   [火の秒数, 火のセット数, 金の秒数, 金のセット数] / 金なしは0 */
+const ROPE_RAMP={
+ 1:[30,6,0,0], 2:[45,6,0,0], 3:[60,6,30,4], 4:[45,6,0,0],
+ 5:[75,6,45,4], 6:[90,6,60,4], 7:[120,5,60,5], 8:[60,6,0,0],
+ 9:[180,3,90,4], 10:[180,4,90,4], 11:[180,4,120,4], 12:[180,3,0,0]};
+function ropeFor(ds,isFriday){
+ const w=Math.max(1,Math.min(12,progWeek(ds)||1));
+ const r=ROPE_RAMP[w]; if(!r)return null;
+ const sec=isFriday?r[2]:r[0], n=isFriday?r[3]:r[1];
+ if(!sec||!n)return null;
+ return {sec:sec,sets:n,week:w,
+  label:((sec>=120&&sec%60===0)?(sec/60)+'分':sec+'秒')+' × '+n+'ラウンド（レスト60秒）'};}
 const PROG_WEEKS=16;
-const DELOAD_WEEKS=[4,8,12,16];
+const DELOAD_WEEKS=[8,16];  /* 週2筋トレなので4週ごとは多すぎる（Codex監査） */
 function progWeek(ds){const t0=+new Date(PROG_START+'T00:00:00'),t=+new Date(ds+'T00:00:00');
  if(t<t0)return 0;return Math.floor((t-t0)/(7*86400000))+1;}
 function isDeload(ds){return DELOAD_WEEKS.indexOf(progWeek(ds))>=0;}
 function phaseOf(w){
  if(w<=0)return {n:'開始前',d:'8/24からスタート'};
- if(w<=3)return {n:'第1期 導入',d:'フォーム習得と衝撃への適応。RIR3で軽めに'};
- if(w===4)return {n:'デロード',d:'セット数40%減・RIR4。3kmの基準値を測る'};
- if(w<=7)return {n:'第2期 蓄積',d:'完成版のボリューム。RIR2-3'};
- if(w===8)return {n:'デロード',d:'セット数30-40%減・有酸素も30%減'};
- if(w<=11)return {n:'第3期 強度',d:'主種目4-6回。相対筋力と3km走力'};
- if(w===12)return {n:'デロード',d:'3kmテスト以外は軽く'};
- if(w<=15)return {n:'第4期 仕上げ',d:'重量維持でセット数を絞る。600-800m反復'};
- if(w===16)return {n:'ピーキング',d:'通常の半分・失敗セットなし。最終計測へ'};
+ if(w<=3)return {n:'第1期 校正',d:'開始重量を合わせる期間。RIR3で軽めに。縄跳びは30-45秒から'};
+ if(w<=7)return {n:'第2期 蓄積',d:'RIR2-3で漸進。記録の完全性を90%以上に'};
+ if(w===8)return {n:'デロード',d:'セット数40-50%減・重量10%減・RIR4。ここで回復を作る'};
+ if(w<=15)return {n:'第3期 強度',d:'主種目4-6回。縄跳びは3分ラウンドへ'};
+ if(w===16)return {n:'デロード＆再評価',d:'セット数半分。体重・ウエスト・筋力を測り直して次の16週を組む'};
  return {n:'プログラム終了',d:'再評価して次の16週を組む'};}
 /* ボクシング階級（プロ・リミット体重kg） */
 const WEIGHT_CLASSES=[
@@ -423,14 +436,19 @@ const FOOD_CATS=[['conv','コンビニ'],['staple','主食'],['cook','自炊'],[
    ※メニューキー(uA/dA/uB/dB/core)は index.html と互換を保つため据え置き */
 const MENUS={
  uA:{name:'月 全身筋力A',ex:['ベンチプレス','チェストサポートDBロウ','レッグプレス','シーテッドレッグカール','パロフプレス']},
- dA:{name:'火 パワー＋縄跳び（屋外）',ex:['カウンタームーブメントジャンプ','インクライン爆発的プッシュアップ','縄跳び(3分ラウンド)','デッドバグ','サイドプランク']},
- uB:{name:'木 全身筋力B',ex:['ブルガリアンスクワット','懸垂','インクラインダンベルプレス','スミス・ヒップスラスト','フェイスプル','カーフレイズ(立位)']},
- dB:{name:'金 低強度ロードワーク（屋外）',ex:['縄跳び(3分ラウンド)','早歩き・軽いジョグ','モビリティ・ストレッチ']},
- core:{name:'土 ランニングインターバル',ex:['ランニングインターバル','モビリティ・ストレッチ']},
+ dA:{name:'火 縄跳び＋速歩（屋外）',ex:['縄跳び(3分ラウンド)','早歩き・軽いジョグ','デッドバグ','サイドプランク']},
+ uB:{name:'木 全身筋力B',ex:['ルーマニアンデッドリフト','懸垂','インクラインダンベルプレス','ブルガリアンスクワット','フェイスプル','サイドレイズ','カーフレイズ(座位)']},
+ dB:{name:'金 速歩＋縄跳び（屋外）',ex:['早歩き・軽いジョグ','縄跳び(3分ラウンド)','モビリティ・ストレッチ']},
+ core:{name:'土 バイクインターバル',ex:['バイクインターバル','モビリティ・ストレッチ']},
  rest:{name:'レスト（休養）',ex:[]},
 };
 /* 初版に入れていたが v2 で外した種目とその理由。ガイドに表示する */
 const DROPPED={
+ 'カウンタームーブメントジャンプ':'v3で削除。ボクシングをしないので競技転移が小さく、縄跳び・ランと着地衝撃が重複する',
+ 'インクライン爆発的プッシュアップ':'v3で削除。同上。押しの刺激はベンチとインクラインDBで足りている',
+ 'スミス・ヒップスラスト':'v3でRDLに置換。過去ログの10-15kgが総重量か片側かも不明で、開始重量を逆算できなかった',
+ 'ランニングインターバル':'v3でバイクインターバルに置換。縄跳び2日＋ランで週3回の着地衝撃は多すぎる。8週間問題なければランに戻してよい',
+ 'ニュートラルグリップ・ラットプルダウン':'懸垂に統合。疲労時・肩に違和感がある日の代替としては有効',
  'メディシンボール・チェストパス':'エニタイムにボールがない。公園でのインクライン爆発的プッシュアップに置換',
  'フロアプレス':'床でのセットアップが煩雑。安全性の高いベンチ/スミスに置換',
  'ディップス':'パワータワーがない店舗が多い。インクラインDBプレスとプッシュアップで代替',
@@ -462,7 +480,7 @@ const KPIS=[
 ];
 const EXDB={
 /* ========== v2 で追加した種目（エニタイム／自宅・公園で完結する） ========== */
-'チェストサポートDBロウ':{t:'広背筋・僧帽筋中部（腰を使わない引き）',sr:'4セット×6-8回',db:1,
+'チェストサポートDBロウ':{t:'広背筋・僧帽筋中部（腰を使わない引き）',sr:'4セット×6-8回',start:'28kg/手',startWhy:'通常DBロウ32kg×10から、反動が使えないぶんを差し引いて',db:1,
  steps:['インクラインベンチを30-45°にして、うつ伏せで胸をパッドに預ける','足は床にしっかり','ダンベルを両手に、腕を垂らす','肩甲骨を寄せながら肘を腰のポケットへ引く','トップで1秒、腕が伸び切るまで下ろす'],
  tips:['胸をベンチに預けるので腰がまったく関与しない。腰の既往があるならワンハンドロウよりこれ','反動が使えない＝背中に効かせやすい','RIR2-3（あと2-3回はできる）で止める。失敗セットは作らない','6-8回を全セット2回連続でクリアしたら+2kg']},
 'ニュートラルグリップ・ラットプルダウン':{t:'広背筋・上腕二頭筋',sr:'4セット×4-6回',
@@ -477,10 +495,13 @@ const EXDB={
 'インクライン爆発的プッシュアップ':{t:'胸・三頭の爆発力（RFD）',sr:'3セット×3-5回',mode:'bw',unit:'回',
  steps:['公園の手すりやベンチなど、安定した高い支持物に手をつく','体を一直線に保つ','ゆっくり下ろし、押すときは手が離れるくらい爆発的に','着地は肘を柔らかく'],
  tips:['メディシンボールがなくても爆発的な押しが再現できる','支持物が高いほど簡単。最初は高めから','腰が落ちたら腹圧が抜けている合図','速度が落ちたら終了。回数は増やさない']},
-'シーテッドレッグカール':{t:'ハムストリング（腰に負担をかけずに後面を維持）',sr:'3セット×8-10回',
+'バイクインターバル':{t:'心肺（VO2max域）・衝撃なし',sr:'4セット×2分',mode:'bw',unit:'分',prog:'sets',
+ steps:['固定式バイクで10分ウォームアップ（RPE3）','2分間 RPE8（会話できないが全力ではない）','2分間 軽く漕ぐ','これを4-6本','低強度15分＋クールダウン5分'],
+ tips:['1セット=1本(2分)として記録する','※v2ではランニングインターバルだったが、縄跳び・ランで週3回の着地衝撃になるためバイクへ変更（Codex監査）','縄跳びを2日やって翌日に症状が出ない状態を8週間確認できたら、ランに切り替えてよい','本数と強度を同時に増やさない。まず4本→5本→6本','ここは週で唯一「追い込んでいい」枠']},
+'シーテッドレッグカール':{t:'ハムストリング（腰に負担をかけずに後面を維持）',sr:'3セット×8-10回',start:'37.5kg',startWhy:'40kg×12は1セットのみ。複数セット用に保守的に',
  steps:['シーテッドレッグカールマシンに深く座る','太ももパッドで脚を固定、パッドはアキレス腱の少し上','膝を曲げて手前・下へ引き込む','最大収縮で1秒','伸び切る手前までゆっくり戻す（3秒）'],
  tips:['デッドリフトを外した分、後面はこことヒップスラストで維持する','つま先を手前に引く（背屈）とハムに乗る','腰をまったく使わないので、腰の既往があるならRDLよりこちら','RIR2-3。8-10回を2セッション連続クリアで重量UP']},
-'早歩き・軽いジョグ':{t:'低強度有酸素（回復を邪魔しない）',sr:'35分',mode:'cardio',
+'早歩き・軽いジョグ':{t:'低強度有酸素（回復を邪魔しない）',sr:'35分',mode:'cardio',start:'火30分・金40分',startWhy:'RPE3-4。会話が普通にできるペース。ここで追い込まない',
  steps:['公園や河川敷を30-40分','RPE3-4＝会話が普通にできるペース','心拍はおよそ120-135','雨ならエニタイムのインクラインウォーク40-45分に置換'],
  tips:['速く走らないことが目的。ここで追い込むと土曜のインターバルが潰れる','脚に張りが残っている日は歩きだけでよい','週の総運動量を底上げする枠。疲労を足す枠ではない']},
 'ランニングインターバル':{t:'心肺（VO2max域）・3kmタイム短縮',sr:'5セット×2分',mode:'bw',unit:'分',prog:'sets',
@@ -501,7 +522,7 @@ const EXDB={
 '片手ダンベルショルダープレス':{t:'三角筋前部・体幹の抗側屈',sr:'3セット×6-8回',db:1,
  steps:['立位でダンベルを片手、肩の高さに構える','反対の手は腰か前に出してバランス','腹圧をかけ、体が傾かないよう固定','真上に押し上げる','ゆっくり肩の高さへ戻す'],
  tips:['立位・片手にすることで体幹の抗側屈トレを兼ねる','体が横に折れたら重すぎる','両手より軽い重量でOK。肩幅を広げたくないので高重量は追わない','サイドレイズの代わりにこれをやる']},
-'パロフプレス':{t:'腹斜筋・腹横筋（抗回旋）',sr:'2セット×8-12回×各側',
+'パロフプレス':{t:'腹斜筋・腹横筋（抗回旋）',sr:'2セット×8-12回×各側',start:'7.5kg',startWhy:'実測なし。初回の校正値',
  steps:['ケーブル(orチューブ)を胸の高さにセット','ケーブルに対して横向きに立つ','両手でハンドルを胸の前に','体をねじられないよう耐えながら前に押し出す','伸ばした位置で20秒キープ→戻す。左右'],
  tips:['体幹を「回さない力」がパンチを打つときの土台になる','ウエストを太くせずに腹斜筋を鍛えられる（サイドベンドと逆）','呼吸を止めない','体が引っ張られたら重量を下げる']},
 'ネックフレクション':{t:'頸部前面（打たれ強さ・ボクサーの象徴）',sr:'3セット×15回',mode:'bw',unit:'回',
@@ -510,7 +531,7 @@ const EXDB={
 'ネックサイドフレクション':{t:'頸部側面・胸鎖乳突筋',sr:'3セット×15回',mode:'bw',unit:'回',
  steps:['ベンチに横向きで寝て、頭をベンチから出す','耳を肩に近づけるように頭を持ち上げる','1秒キープ','ゆっくり戻す。左右'],
  tips:['自重で十分。加重は数ヶ月かけて慎重に','首を「回す」動きは絶対にしない','前面(ネックフレクション)と同日にやる']},
-'縄跳び(3分ラウンド)':{t:'心肺・ふくらはぎ・リズム・フットワーク',sr:'6セット×3分',mode:'bw',unit:'分',prog:'sets',outdoor:1,
+'縄跳び(3分ラウンド)':{t:'心肺・ふくらはぎ・リズム・フットワーク',sr:'6セット×180秒',mode:'bw',unit:'秒',prog:'sets',outdoor:1,
  steps:['3分跳ぶ → 60秒レスト を1ラウンドとする','【最初の3週】2分×3ラウンドから。3分に伸ばすのはその後','慣れてきたら火曜4-6R、金曜3R','最初は普通の両足跳びで3分続ける','慣れたらボクサーステップ(左右交互)を混ぜる','RPE6-7（息は上がるが会話は途切れ途切れにできる）程度で'],
  tips:['1セット=1ラウンド(3分)として記録する','ラウンド数で漸進する。まず3R→4R→5R→6R','※レストは30秒ではなく60秒から。アキレス腱・足底・ふくらはぎへの反復衝撃を急に増やすのが一番の故障要因','体重が重いほど1回の着地衝撃が大きい。80kg台のうちは特に慎重に増やす','すねorふくらはぎの張りが48時間以上残るなら、次回は1ラウンド減らすか歩きに替える。これは根性の問題ではなく疲労骨折の予防','週2回で十分。週4回に増やす必要はない','引っかかっても止まらずすぐ再開','足音を小さく。かかとを着けない','館内で縄跳び禁止のジムが多い。屋外でやる前提の種目']},
 'シャドーボクシング':{t:'全身・回旋・心肺・フォーム',sr:'3セット×3分',mode:'bw',unit:'分',prog:'sets',
@@ -547,16 +568,16 @@ const EXDB={
  steps:['股関節：90/90ストレッチ 各60秒','胸椎：オープンブック 各10回','肩：ウォールスライド 15回','ハム：ハーフニーリングのハムストレッチ 各60秒','ふくらはぎ：壁ストレッチ 各60秒'],
  tips:['可動域が回旋パワーの上限を決める','痛みが出るところまで伸ばさない','ロードワークの後、体が温まっている状態でやる']},
 /* ===== 以下は index.html から引き継いだ既存種目（メニュー外だがカスタム追加で使える） ===== */
-'ベンチプレス':{t:'大胸筋・三角筋前部・三頭筋',sr:'4セット×4-6回',
+'ベンチプレス':{t:'大胸筋・三角筋前部・三頭筋',sr:'4セット×4-6回',start:'77.5kg',startWhy:'75kg×9を2セット・80kg×5の実績から',
  steps:['ベンチに仰向け、目の位置がバーの真下','手幅は肩幅の1.5倍（81cmラインに薬指）','肩甲骨を寄せて下げ、軽くアーチ','肘を約45°に開き胸の下部へゆっくり下ろす','胸に触れたら足で地面を押しながら一気に挙上','肘をロックアウトして1レップ'],
  tips:['お尻はベンチから絶対に浮かさない','下ろし2-3秒・上げ1秒のテンポ','一人ならセーフティバー必須','WU：バーのみ×10→40%×8→60%×5']},
-'インクラインダンベルプレス':{t:'大胸筋上部・三角筋前部',sr:'3セット×6-8回',db:1,
+'インクラインダンベルプレス':{t:'大胸筋上部・三角筋前部',sr:'3セット×6-8回',start:'22kg/手',startWhy:'22kg×12×3の実績。中断後なので24kgからは始めない',db:1,
  steps:['ベンチを30°に設定','ダンベルを膝で蹴り上げてスタートポジションへ','手のひら正面、肩の真上にセット','肘を約75°に開き胸上部へ下ろす','ストレッチを感じたら弧を描いて押し上げ','トップで軽く近づけて絞る'],
  tips:['45°以上だと肩の種目になる。30°がベスト','常に肩甲骨を寄せたまま','終了時はダンベルを太ももに戻してから座る']},
 'ショルダープレス':{t:'三角筋前・中部・三頭筋',sr:'3セット×10-12回',db:1,
  steps:['背もたれ80-85°で座る','ダンベルを耳の横、肘90°に構える','手のひら正面のまま真上に押し上げ','トップで両手を近づける（ハの字→真上）','肘が肩より下がりすぎない位置まで戻す'],
  tips:['腰を反らない（腹筋で体幹固定）','肘の下限は耳の高さ','首をすくめない（僧帽筋に逃げる）']},
-'サイドレイズ':{t:'三角筋中部',sr:'3セット×12-15回',db:1,
+'サイドレイズ':{t:'三角筋中部（v3で復活：側部三角筋の直接刺激がゼロだったため）',sr:'2セット×12-15回',start:'5kg/手',startWhy:'5kg×15前後の実績',db:1,
  steps:['軽めのダンベルで肩幅に立つ','体を5-10°前傾、ダンベルは体の横','肘を軽く曲げたまま、水を注ぐように小指側を上に','肩の高さで1秒キープ','重力に任せず、ゆっくり下ろす'],
  tips:['反動を使わない。5kgでも効く','肩をすくめない','肩より上は僧帽筋になる。上げすぎ注意','「肘を上げる」イメージで安定']},
 'トライセプスプッシュダウン':{t:'上腕三頭筋',sr:'3セット×12-15回',
@@ -568,7 +589,7 @@ const EXDB={
 'バーベルスクワット':{t:'大腿四頭筋・大臀筋・ハム',sr:'4セット×6-8回',spine:1,
  steps:['ハイバーで担ぐ（僧帽筋の上）','足幅肩幅〜やや広め、つま先30°外','胸を張り腹圧をかけて開始','お尻を引きながら膝を曲げ、膝はつま先方向へ','パラレルまで下ろす','かかとで地面を押して立つ'],
  tips:['かかと浮き→プレートを敷くかリフティングシューズ','ニーイン厳禁','腹圧：大きく吸って360°膨らませ止める','WU：自重×10→バー×10→50%×5→70%×3','セーフティバー必須']},
-'レッグプレス':{t:'大腿四頭筋・大臀筋',sr:'3セット×6-8回',
+'レッグプレス':{t:'大腿四頭筋・大臀筋',sr:'3セット×6-8回',start:'210kg',startWhy:'200kg×11×3の実績。6-8回帯には200kgでは軽い',
  steps:['深く座り背中をパッドに密着','足は中央〜やや下に肩幅','膝をゆっくり曲げ90°まで下ろす','かかとで押して戻す','ロックアウトせず95%伸展で止める'],
  tips:['お尻が浮くほど深く下ろさない','足の位置：高め=ハム尻／低め=四頭筋','膝を伸ばし切ると関節に負担']},
 'レッグエクステンション':{t:'大腿四頭筋（単関節）',sr:'3セット×12-15回',
@@ -580,7 +601,7 @@ const EXDB={
 'カーフレイズ(立位)':{t:'腓腹筋',sr:'2セット×10-15回',
  steps:['マシンに肩をセット、つま先をプレートの端に','かかとを下ろしストレッチ','限界まで上げてトップ2秒キープ','反動を使わずゆっくり下ろす'],
  tips:['可動域を最大限使う','高回数＋ゆっくりが効く部位','つま先の向きで効く場所が変わる']},
-'懸垂':{t:'広背筋・上腕二頭筋・僧帽筋下部（相対筋力の本丸）',sr:'4セット×5-8回',
+'懸垂':{t:'広背筋・上腕二頭筋・僧帽筋下部（相対筋力の本丸）',sr:'4セット×5-8回',start:'自重',startWhy:'83kg前後で10回×3の実績。8回×4セットできたら加重へ',
  steps:['パラレル(手のひら向かい合わせ)かナローで握る','肩甲骨を下げてデッドハングから開始','胸をバーに近づけるイメージで引き上げ','顎がバーを越えたら1秒','腕が伸び切るまでゆっくり下ろす','自重で8回を超えたら加重する'],
  tips:['加重はディップスベルトがなくてもできる。足の間にダンベルを挟む／膝で挟むだけでいい（〜20kgまでは十分いける）','※初版のv2で一度この種目をラットプルダウンに置き換えたが、これは誤り。自重10回引ける人から外す理由がなかった','減量するほど楽になる＝ボクサー体型の進捗がそのまま数字に出る、この計画で最も相性のいい種目','グリップ幅で広背筋の活動はほぼ変わらない（Andersen 2014）。パラレルを選ぶのは肩に優しいから','反動を使わない。上げで肩甲骨を寄せ、下ろしで広げる','疲労が強い日・肩に違和感がある日はラットプルダウンに替えてよい']},
 'ダンベルロウ':{t:'広背筋・僧帽筋・菱形筋',sr:'3セット×10-12回(各腕)',db:1,
@@ -589,7 +610,7 @@ const EXDB={
 'シーテッドケーブルロウ':{t:'広背筋・僧帽筋中部',sr:'3セット×10-12回',
  steps:['Vバーorワイドバー装着で座る','膝を軽く曲げ上体わずかに前傾','肩甲骨を寄せながらみぞおちへ引く','肘が体の後ろを通過するまで','肩甲骨が開くのを感じるまで戻す'],
  tips:['前後の反動を使わない','肩を下げたまま引く','Vバー=厚み／ワイドバー=広がり']},
-'フェイスプル':{t:'三角筋後部・外旋筋群',sr:'2セット×10-15回',
+'フェイスプル':{t:'三角筋後部・外旋筋群',sr:'2セット×12-15回',start:'15kg',startWhy:'15kg×15×3の実績',
  steps:['ケーブルを顔の高さ、ロープ装着','後ろに2-3歩下がる','肘を高く保ち顔に向かって引く','両手が耳の横、外旋ポーズ','ゆっくり戻す'],
  tips:['肩の健康維持に超重要。軽め高回数','肘は常に肩の高さ以上','ダブルバイセップスのイメージで外旋','絶対に省略しない']},
 'バーベルカール':{t:'上腕二頭筋・前腕',sr:'3セット×10-12回',
@@ -598,10 +619,10 @@ const EXDB={
 'ハンギングレッグレイズ':{t:'腹直筋下部・腸腰筋',sr:'3セット×10-15回',mode:'bw',unit:'回',
  steps:['バーにぶら下がる（肩幅）','揺れを止めてから膝を胸へ引き上げ','余裕があれば脚を伸ばして','骨盤が後傾するまで上げる','脚を振らずゆっくり下ろす'],
  tips:['骨盤の後傾が重要','振れるなら膝曲げバージョン','握力が限界ならストラップ使用']},
-'ルーマニアンデッドリフト':{t:'ハムストリング・大臀筋',sr:'4セット×8-10回',spine:1,
+'ルーマニアンデッドリフト':{t:'ハムストリング・大臀筋',sr:'3セット×6-8回',start:'55kg',startWhy:'65kg×8×3の実績だが、中断期間と腰の既往を考慮して下げる',spine:1,
  steps:['肩幅で握り立つ','膝角度を固定したままお尻を後ろへ','バーは常に脚に沿わせて下ろす','ハムのストレッチ限界（膝下あたり）で止める','臀筋を絞って立ち上がる'],
  tips:['背中を絶対に丸めない','膝固定の股関節ヒンジ動作','バーが体から離れると腰に負担','お尻で後ろの壁にタッチするイメージ']},
-'ブルガリアンスクワット':{t:'大臀筋・四頭筋',sr:'3セット×6-8回×各脚',db:1,
+'ブルガリアンスクワット':{t:'大臀筋・四頭筋',sr:'3セット×6-8回×各脚',start:'16kg/手',startWhy:'16.5kg×10×4の実績',db:1,
  steps:['ベンチの前に立ち片足の甲を乗せる','前脚は大きく前へ','前膝を曲げ、後ろ膝が床に触れる直前まで','前脚かかとで押して立つ'],
  tips:['バランスが取りにくいのが正常','前脚に体重の8割','上体まっすぐ（前傾すると四頭筋メイン）','最初は自重でフォーム習得']},
 'レッグカール':{t:'ハムストリング（単関節）',sr:'3セット×12-15回',
@@ -610,7 +631,7 @@ const EXDB={
 'ヒップスラスト':{t:'大臀筋・ハムストリング',sr:'3セット×10-12回',spine:1,
  steps:['ベンチに肩甲骨を乗せバーを骨盤に（パッド必須）','膝90°、足は肩幅','かかとで押し骨盤を天井へ突き上げ','体一直線で臀筋を2秒強く絞る','床に着く前に次のレップ'],
  tips:['腰を反らせすぎない。骨盤後傾で臀筋','顎を引きおへそを見る','トップで尻がカチカチなら正解']},
-'カーフレイズ(座位)':{t:'ヒラメ筋',sr:'4セット×15-20回',
+'カーフレイズ(座位)':{t:'ヒラメ筋',sr:'2セット×10-15回',start:'30kg',startWhy:'20kg×20×4は軽すぎた',
  steps:['シーテッドマシンで膝にパッド','かかとを限界まで下ろす','限界まで上げて2秒キープ','ゆっくり下ろしてストレッチ'],
  tips:['座位は膝曲げ=ヒラメ筋に効く','立位と両方でふくらはぎ全体をカバー','20回余裕なら重量追加']},
 'インクラインウォーク':{t:'心肺・脂肪燃焼',sr:'30分',mode:'cardio',
@@ -703,6 +724,22 @@ window.togglePause=function(){
  if(!S.pauses)S.pauses=[];
  S.pauses.push({from:fmt(new Date()),to:null,why:why||''});
  save();render();toast('休止中。この期間は「遅れ」に数えません');};
+/* Codex監査の中心的な指摘：
+   「1863kcal と記録されているのに体重が増えた」＝ 1日500-1000kcal の記録漏れ。
+   0〜1000kcal の日は「少なく食べた日」ではなく【未完了ログ】として扱う。
+   これを低摂取として平均に混ぜると、実態より節制しているように見えてしまう。 */
+const INCOMPLETE_KCAL=1000;
+function logState(ds){const o=S.days[ds];if(!o)return 'none';
+ const k=dayTotals(ds).k;
+ if(k<=0)return 'none';
+ return k<INCOMPLETE_KCAL?'partial':'full';}
+/* 完全記録率：直近n日のうち、1000kcal以上を記録できた日の割合 */
+function logRate(ds,n){
+ const d=new Date(ds+'T00:00:00');let full=0,tot=0;
+ for(let i=0;i<n;i++){const k=fmt(d);
+  if(k>=S.profile.startDate){tot++;if(logState(k)==='full')full++;}
+  d.setDate(d.getDate()-1);}
+ return tot?{full:full,tot:tot,pct:Math.round(full/tot*100)}:null;}
 /* 直近4週の体重トレンド（kg/週）。点が少ないときは null を返して判定しない */
 function trend4w(ds){
  const t1=+new Date(ds+'T00:00:00'),t0=t1-28*86400000;
@@ -809,10 +846,10 @@ function coachMsg(o,t,P){
  const mk=BYDAY[new Date(curDate+'T00:00:00').getDay()];
  if(mk){const done=o.wk&&o.wk.logs&&Object.keys(o.wk.logs).length;
   const hint={uA:'エニタイム。全セットRIR2-3で止めろ。失敗セットは作らない。'
-   ,dA:'屋外。ジャンプとプッシュアップは全力3-5本だけ、速度が落ちたら即終了。縄跳びは4-6R。'
+   ,dA:'屋外。縄跳びは今週の指定ぶんだけ。増やすな、足が壊れる。あとは速歩30分。'
    ,uB:'エニタイム。今日の主役は懸垂だ。体重が落ちるほど回数が増える、進捗が一番わかる種目。'
-   ,dB:'屋外の低強度日。ここで追い込むな。明日のインターバルが潰れる。'
-   ,core:'今日だけは追い込んでいい。2分×4-6本、RPE8。本数と速度は同時に増やすな。'}[mk]||'';
+   ,dB:'屋外の低強度日。速歩40分。ここで追い込むな。'
+   ,core:'今日だけは追い込んでいい。バイク2分×4-6本、RPE8。本数と強度は同時に増やすな。'}[mk]||'';
   return done?'今日の'+MENUS[mk].name+'、お疲れ！あとは食事とタンパク質で回復だ。明日も来いよ🥊'
    :'今日は'+MENUS[mk].name+'。'+hint+'太さではなく、速さと切れを取りにいけ🥊';}
  return '今日は休養日。回復もトレーニングのうちだ。タンパク質と睡眠をしっかり整えよう💪';}
@@ -993,6 +1030,12 @@ function homeTab(){
    '<div class="row between"><span class="num" style="font-size:26px">'+t.k.toLocaleString()+'<span class="small muted">/'+P.kcal.toLocaleString()+'kcal</span></span>'+
    '<span class="xs" style="color:var(--accent);font-weight:800">残り'+Math.max(0,P.kcal-t.k).toLocaleString()+'kcal</span></div>'+
    '<div class="bar" style="margin:6px 0 4px"><i style="width:'+Math.min(100,t.k/P.kcal*100)+'%"></i></div>'+
+   (function(){const st2=logState(curDate);
+     const isToday=curDate===fmt(new Date());
+     if(st2!=='partial')return '';
+     return '<div class="xs" style="margin:6px 0;padding:8px;border:1px solid var(--bad);border-radius:9px;line-height:1.7">'+
+      '<b style="color:var(--bad)">⚠️ 未完了ログ</b>　'+t.k+'kcal は'+(isToday?'まだ入力途中のはずです。':'記録漏れの可能性が高いです。')+
+      '<br><span class="muted">油・調味料・飲み物・間食・外食が抜けていませんか。ここを埋めないと、節制できているように見えて実際は増えます。</span></div>';})()+
    nrow('たんぱく質',t.p,P.p,'var(--p)','g')+nrow('脂質',t.f,P.f,'var(--f)','g')+nrow('糖質',t.c,P.c,'var(--c)','g')+
    '<div class="row between" style="margin-top:10px"><span class="xs muted">スイーツ枠 '+t.sw+'/'+P.sweets+'kcal</span><span class="xs '+(t.sw>P.sweets?'':'muted')+'" style="'+(t.sw>P.sweets?'color:var(--bad);font-weight:700':'')+'">'+(t.sw>P.sweets?'オーバー！':'OK')+'</span></div>'+
    '<div class="bar sweet" style="margin-top:4px"><i style="width:'+Math.min(100,t.sw/P.sweets*100)+'%"></i></div>'+
@@ -1014,6 +1057,11 @@ function homeTab(){
     '<div class="row between" style="margin-bottom:6px"><span class="small">体重を記録</span>'+
      '<span class="num" style="color:'+(f.w>=FLOOR.weighins?'var(--ok)':'var(--muted)')+'">'+f.w+'<span class="xs muted">/'+FLOOR.weighins+'日</span></span></div>'+
     '<div class="bar" style="height:6px;margin-bottom:9px"><i style="width:'+Math.min(100,f.w/FLOOR.weighins*100)+'%"></i></div>'+
+    (function(){const lr=logRate(curDate,7);if(!lr)return '';
+      const col=lr.pct>=90?'var(--ok)':(lr.pct>=60?'var(--accent)':'var(--bad)');
+      return '<div class="row between" style="margin:9px 0 6px"><span class="small">食事の完全記録率<br><span class="xs muted">1000kcal未満の日は未完了扱い</span></span>'+
+       '<span class="num" style="color:'+col+'">'+lr.pct+'<span class="xs muted">% ('+lr.full+'/'+lr.tot+'日)</span></span></div>'+
+       '<div class="bar" style="height:6px;margin-bottom:9px"><i style="width:'+lr.pct+'%"></i></div>';})()+
     '<div class="row between" style="margin-bottom:6px"><span class="small">トレーニング</span>'+
      '<span class="num" style="color:'+(f.t>=FLOOR.workouts?'var(--ok)':'var(--muted)')+'">'+f.t+'<span class="xs muted">/'+FLOOR.workouts+'回</span></span></div>'+
     '<div class="bar" style="height:6px"><i style="width:'+Math.min(100,f.t/FLOOR.workouts*100)+'%"></i></div>'+
@@ -1248,7 +1296,17 @@ function trainTab(){
       const tgt=(prev&&prev.top)?Math.round(prev.top*pct/100/2.5)*2.5:null;
       return '<div class="xs" style="color:var(--bad);margin-top:4px">🦴 脊柱負荷種目 — 痛みが残るなら「'+(ALT_EX[ex]||'マシン系')+'」で代替を</div>'+
        (tgt?'<div class="xs" style="color:var(--f)">復帰目安 '+tgt+'kg（直近'+prev.top+'kgの'+pct+'%・痛みゼロなら週+10%）</div>':'');})()+
-    (function(){const tg=exTarget(ex);return tg?'<div class="xs" style="color:var(--accent);margin-top:4px;font-weight:700">🎯 今日の目標: '+tg.label+'</div>':'';})()+
+    (function(){
+      if(ex==='縄跳び(3分ラウンド)'){
+       const isFri=new Date(curDate+'T00:00:00').getDay()===5;
+       const rp=ropeFor(curDate,isFri);
+       return '<div class="xs" style="color:var(--accent);margin-top:4px;font-weight:700">🎯 '+
+        (rp?'WEEK'+rp.week+'の指定: '+rp.label+'　<span style="font-weight:400;color:var(--muted)">増やさない。すね/ふくらはぎの痛みが翌日残ったら前週の50-70%へ戻す</span>'
+           :'今週この曜日は縄跳びなし。速歩だけでいい')+'</div>';}
+      const tg=exTarget(ex);
+      if(tg)return '<div class="xs" style="color:var(--accent);margin-top:4px;font-weight:700">🎯 今日の目標: '+tg.label+'</div>';
+      if(g&&g.start&&!prev)return '<div class="xs" style="color:var(--accent);margin-top:4px;font-weight:700">🎯 '+(exMode(ex)==='cardio'?'目安':'開始重量')+': '+g.start+'　<span style="font-weight:400;color:var(--muted)">'+g.startWhy+'</span></div>';
+      return '';})()+
     (exMode(ex)!=='cardio'?'<div class="xs muted" style="margin-top:4px">⏱ レスト '+fmtClock(exRest(ex))+' <span style="color:var(--accent)" onclick="editRest(\''+ex+'\')">変更</span> ・ ✓を押すと自動でタイマー開始</div>':'')+
     sets.map((s,i)=>{const md=exMode(ex);
      if(md==='cardio')return '<div class="setrow" style="flex-wrap:wrap">'+
@@ -1293,7 +1351,10 @@ window.addSet=function(ex){const wk=ensureWk();if(!wk.logs[ex])wk.logs[ex]=[];
  else if(md==='bw'){
   /* 既定値は種目定義の sr（例「6セット×3分」）から拾う。縄跳びが10分スタートになるのを防ぐ */
   const g=EXDB[ex];const m=g&&g.sr?g.sr.match(/\d+セット×(\d+)/):null;
-  const def=m?parseInt(m[1]):(exUnit(ex)==='秒'?45:10);
+  let def=m?parseInt(m[1]):(exUnit(ex)==='秒'?45:10);
+  if(ex==='縄跳び(3分ラウンド)'){ /* 週次の段階表が処方を決める */
+   const rp=ropeFor(curDate,new Date(curDate+'T00:00:00').getDay()===5);
+   if(rp)def=rp.sec;}
   const base=arr.length?arr[arr.length-1]:(p&&p.last?p.last:null);
   arr.push({r:(base&&base.r)?base.r:def});}
  else{let w=0,r=8;
@@ -1411,7 +1472,8 @@ const BOXER_REST={'縄跳び(3分ラウンド)':60,'シャドーボクシング'
  '加重懸垂(パラレル)':240,'トラップバーデッドリフト':240,'ネックフレクション':45,
  'ネックサイドフレクション':45,'片脚バランス・ステップワーク':30,'モビリティ・ストレッチ':0,
  'カウンタームーブメントジャンプ':90,'インクライン爆発的プッシュアップ':90,
- 'ランニングインターバル':120,'早歩き・軽いジョグ':0,
+ 'ランニングインターバル':120,'バイクインターバル':120,'早歩き・軽いジョグ':0,
+ 'ルーマニアンデッドリフト':180,'サイドレイズ':60,'シーテッドレッグカール':90,
  'ニュートラルグリップ・ラットプルダウン':150,'懸垂':180,'チェストサポートDBロウ':120,'スミス・ヒップスラスト':120};
 window.toggleInjury=function(){
  if(S.injury){if(!confirm('腰痛モードを終了しますか？（痛みが完全に消えてから）'))return;
@@ -1451,6 +1513,12 @@ function exTarget(ex){
  if(!m){const tot=p.sets.reduce(function(a,s){return a+(parseFloat(s.r)||0);},0);
   return tot?{label:'前回合計'+tot+'回 → 今日は'+(tot+1)+'回'}:null;}
  const nSets=parseInt(m[1]),lo=parseInt(m[2]),hi=m[3]?parseInt(m[3]):lo;
+ if(ex==='縄跳び(3分ラウンド)'){
+  /* 段階導入表が処方を決めるので、前回比ではなく「今週の指定」を出す */
+  const isFri=new Date(curDate+'T00:00:00').getDay()===5;
+  const rp=ropeFor(curDate,isFri);
+  if(!rp)return {label:'今週この曜日は縄跳びなし。速歩だけでいい（足への衝撃を溜めない週）'};
+  return {label:'WEEK'+rp.week+'の指定 → '+rp.label+'　※増やさない'};}
  if(exMode(ex)==='bw'){
   const minR=Math.min.apply(null,p.sets.map(function(s){return parseFloat(s.r)||0;}));
   const everyHi=p.sets.length>=nSets&&p.sets.every(function(s){return (parseFloat(s.r)||0)>=hi;});
@@ -1494,6 +1562,7 @@ window.openGuide=function(ex){const g=EXDB[ex];
  if(!g){openModal('<h3>'+ex+'</h3><div class="muted small">カスタム種目のためガイドはありません。</div>');return;}
  openModal('<h3>'+ex+'</h3><div class="small muted">'+g.t+'　｜　'+g.sr+'</div>'+
   (DROPPED[ex]?'<div class="small" style="margin-top:8px;padding:9px;border:1px solid var(--bad);border-radius:10px;line-height:1.7;color:var(--bad)">⚠️ この種目は v2 で標準メニューから外しました<br><span style="color:var(--muted)">'+DROPPED[ex]+'</span></div>':'')+
+  (g.start?'<div class="small" style="margin-top:8px;padding:9px;border:1px solid var(--accent2);border-radius:10px;line-height:1.7">🎯 <b>'+(g.mode==='cardio'?'目安 ':'開始重量 ')+g.start+'</b><br><span class="xs muted">'+g.startWhy+'</span></div>':'')+
   (g.outdoor?'<div class="xs" style="margin-top:8px;color:var(--accent)">📍 屋外種目。エニタイムは館内での縄跳びが禁止の店舗が多いため、公園か自宅前で行う想定です</div>':'')+
   '<div class="guide"><div style="font-weight:800;margin:10px 0 6px">やり方</div><ol style="padding-left:20px;margin:0">'+
   g.steps.map(s=>'<li>'+s+'</li>').join('')+'</ol>'+
@@ -1707,6 +1776,9 @@ window.weeklyReview=function(){
  '1. 今週の評価（100点満点と一言）\n2. 良かった点\n3. 問題点とその原因分析\n'+
  '4. 来週の具体的な指示（食事・トレーニング・生活で各1つ以上、数値で）\n5. 停滞している場合の打ち手\n'+
  '※評価軸はボクサー体型です。体重より「ウエスト/身長比」と「除脂肪量が減っていないか」を優先して見てください。'+
+ '※1000kcal未満の日は記録漏れです。摂取量として平均に含めないでください。'+
+ '※毎週見るのは「体重7日平均・ウエスト・完全記録率・筋トレ完遂率」の4つだけにしてください。'+
+ '※摂取カロリーの変更提案は、完全記録率90%以上が3週続いてからにしてください。'+
  '筋肥大（サイズアップ）を勧める助言は不要です。上半身を厚くする方向の指示は避けてください。\n'+
  '※このメッセージに食事や体の写真が添付されていたら、数値に表れない食事の質（野菜・タンパク源・加工度・外食の内容）や体の変化も必ず評価に含めてください。\n\n'+
  '【プロフィール】'+(P.age?P.age+'歳':'')+'男性 '+P.height+'cm。開始時('+P.startDate+') '+P.startWeight+'kg/体脂肪'+P.startBF+'%。\n'+
@@ -1721,6 +1793,11 @@ window.weeklyReview=function(){
  (function(){const lm=leanMass(curDate);const c=classOf(w);const lwa=latestWaist(curDate);
    return (lm!=null?'　除脂肪'+lm+'kg':'')+(c?'　階級:'+c.n:'')+
     (lwa?'　ウエスト'+lwa.w+'cm(身長比'+(lwa.w/P.height).toFixed(3)+')':'');})()+'\n'+
+ '【記録の完全性】'+(function(){const lr=logRate(curDate,7);
+   const inc=[];const d=new Date(curDate+'T00:00:00');
+   for(let i=0;i<7;i++){const k=fmt(d);if(logState(k)==='partial')inc.push(fmtShort(k)+'('+dayTotals(k).k+'kcal)');d.setDate(d.getDate()-1);}
+   return (lr?'完全記録率 '+lr.pct+'%（'+lr.full+'/'+lr.tot+'日）':'')+
+    (inc.length?'　※未完了ログ: '+inc.join('、')+' — これらは「少食」ではなく記録漏れとして扱ってください':'');})()+'\n'+
  '【BOXER KPI】'+KPIS.map(function(kp){const r=kpiVal(kp.k);
    return kp.n+':'+(r?r.v+kp.u:'未計測')+'(目標'+kp.goal+')';}).join(' / ')+'\n'+
  '【今週のミッション】'+(S.mission&&S.mission.text?S.mission.text:'未設定')+'\n\n'+
