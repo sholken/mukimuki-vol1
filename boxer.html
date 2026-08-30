@@ -1227,6 +1227,10 @@ function foodTab(){
    '<span class="chip" onclick="applySet('+i+')">⚡ '+esc(stt.name)+
    '<span style="margin-left:7px;color:var(--muted)" onclick="event.stopPropagation();delSetMeal('+i+')">✕</span></span>').join('')+'</div>':'')+
   (groups||'<div class="muted small" style="margin-top:10px">まだ記録がありません</div>')+
+  '<label class="btn" style="width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;cursor:pointer">'+
+   '📷 <span style="letter-spacing:1px;margin-left:6px">写真から記録する</span>'+
+   '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="photoMeal(event)"></label>'+
+  '<div class="xs muted" style="margin-top:6px;text-align:center">'+(aiKey()?'撮るか選ぶだけ。品名とPFCを推定して、あとで直せます':'<span style="color:var(--accent)" onclick="setAiKey()">使うにはAPIキーの設定が必要です →</span>')+'</div>'+
   '<div class="row" style="margin-top:12px;gap:8px">'+
    '<button class="btn" style="flex:2" onclick="openFoodModal()">＋ 食品を追加</button>'+
    '<button class="ghost" style="flex:1" onclick="copyYesterday()">昨日コピー</button></div>'+
@@ -1258,6 +1262,103 @@ function foodListHtml(list){
 }
 window.renderFoodList=function(){const list=allFoods().filter(f=>(foodCat==='all'||f.cat===foodCat)&&(!foodQ||f.n.indexOf(foodQ)>=0));
  document.getElementById('foodlist').innerHTML=foodListHtml(list);};
+/* ================= 写真から食事を記録 =================
+   打ち込みの手間が記録率0%の主因なので、写真1枚から推定して入力欄を埋める。
+   APIキーはこの端末のlocalStorageにしか保存しない（リポジトリには絶対に入れない）。
+   GitHub Pagesは静的配信なのでサーバー側に置く場所がなく、キーは本人の端末に置く方式にしている。
+   Codexの監査が「過少記録は油・調味料・飲料・外食の重量推定が主因」と特定したので、
+   プロンプトでそこを明示的に見積もらせている。 */
+const AI_MODEL='claude-sonnet-5';
+function aiKey(){return localStorage.getItem('mukimuki_ai_key')||'';}
+window.setAiKey=function(){
+ const cur=aiKey();
+ const v=prompt('Anthropic APIキー（sk-ant-...）\n\nこの端末にだけ保存されます。GitHubには送られません。\n空にすると削除します。',cur);
+ if(v===null)return;
+ if(v.trim()){localStorage.setItem('mukimuki_ai_key',v.trim());toast('APIキーを保存しました');}
+ else{localStorage.removeItem('mukimuki_ai_key');toast('APIキーを削除しました');}
+ render();};
+function shrinkImage(file,maxPx){return new Promise(function(res,rej){
+ const img=new Image(),url=URL.createObjectURL(file);
+ img.onload=function(){
+  let w=img.width,h=img.height;
+  const sc=Math.min(1,maxPx/Math.max(w,h));
+  w=Math.round(w*sc);h=Math.round(h*sc);
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  cv.getContext('2d').drawImage(img,0,0,w,h);
+  URL.revokeObjectURL(url);
+  res(cv.toDataURL('image/jpeg',0.8).split(',')[1]);};
+ img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('画像を読めませんでした'));};
+ img.src=url;});}
+window.photoMeal=function(ev){
+ const file=ev.target.files&&ev.target.files[0];ev.target.value='';
+ if(!file)return;
+ if(!aiKey()){openModal('<h3>先にAPIキーの設定が必要です</h3>'+
+   '<div class="small" style="line-height:1.9">写真からPFCを出すには、Anthropic APIのキーが要ります。<br>'+
+   '① <b>console.anthropic.com</b> でアカウントを作る<br>'+
+   '② API Keys から新しいキーを発行<br>'+
+   '③ 下のボタンで貼り付ける<br><br>'+
+   '<span class="muted">キーは<b>この端末のブラウザ内だけ</b>に保存されます。GitHubにも私にも送られません。'+
+   '写真1枚あたり数円程度です。</span></div>'+
+   '<button class="btn" style="width:100%;margin-top:12px" onclick="closeModal();setAiKey()">APIキーを入力する</button>');return;}
+ openModal('<h3>📷 写真を解析中…</h3><div class="small muted" style="line-height:1.9">'+
+  '皿の上のものを1品ずつ推定しています。<br>油・ドレッシング・調味料も見積もりに入れています（ここが抜けるのが過少記録の主因なので）。<br><br>10〜20秒ほどかかります。</div>');
+ shrinkImage(file,1024).then(function(b64){
+  return fetch('https://api.anthropic.com/v1/messages',{
+   method:'POST',
+   headers:{'content-type':'application/json','x-api-key':aiKey(),
+    'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+   body:JSON.stringify({model:AI_MODEL,max_tokens:1200,
+    messages:[{role:'user',content:[
+     {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+     {type:'text',text:
+      'この食事写真を、日本の一般的な外食・中食・自炊の常識的な分量で推定してください。\n'+
+      '重要：調理油、ドレッシング、マヨネーズ、タレ、砂糖、飲み物を必ず見積もりに含めてください。'+
+      'これらの見落としが過少記録の最大原因です。迷ったら多めに見積もってください。\n'+
+      '揚げ物の衣が吸った油、炒め物の油、ラーメンのスープの脂も忘れずに。\n\n'+
+      'JSONだけを返してください。前置きも説明も不要です。形式：\n'+
+      '{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で"}'}
+    ]}]})});
+ }).then(function(r){
+  if(!r.ok)return r.text().then(function(t){throw new Error('API '+r.status+'：'+t.slice(0,200));});
+  return r.json();
+ }).then(function(j){
+  const txt=(j.content||[]).map(function(c){return c.text||'';}).join('');
+  const m=txt.match(/\{[\s\S]*\}/);
+  if(!m)throw new Error('推定結果を読み取れませんでした：'+txt.slice(0,120));
+  const d=JSON.parse(m[0]);
+  aiPending=(d.items||[]).map(function(x){return {n:String(x.n||'不明').slice(0,20),
+   k:Math.max(0,Math.round(+x.k||0)),p:Math.round((+x.p||0)*10)/10,
+   f:Math.round((+x.f||0)*10)/10,c:Math.round((+x.c||0)*10)/10,sw:x.sw?1:0,q:1};});
+  aiNote=d.note||'';
+  if(!aiPending.length)throw new Error('食べ物を認識できませんでした');
+  renderAiResult();
+ }).catch(function(e){
+  openModal('<h3>うまくいきませんでした</h3><div class="small" style="line-height:1.8">'+esc(e.message)+
+   '</div><div class="xs muted" style="margin-top:10px;line-height:1.8">キーが正しいか、通信が繋がっているか確認してください。'+
+   'それでもダメなら、いつもどおり手入力で大丈夫です。<b>記録が0になるよりはるかにマシです。</b></div>'+
+   '<button class="btn" style="width:100%;margin-top:12px" onclick="closeModal()">閉じる</button>');});};
+let aiPending=null,aiNote='';
+function renderAiResult(){
+ const tot=aiPending.reduce(function(a,x){return {k:a.k+x.k*x.q,p:a.p+x.p*x.q,f:a.f+x.f*x.q,c:a.c+x.c*x.q};},{k:0,p:0,f:0,c:0});
+ openModal('<h3>📷 推定結果　<span class="xs muted">直せます</span></h3>'+
+  (aiNote?'<div class="xs muted" style="margin-bottom:8px">'+esc(aiNote)+'</div>':'')+
+  '<div class="chips" style="margin-bottom:10px">'+MEAL_NAMES.map(function(m){
+    return '<button class="chip '+((mealSel||guessMeal())===m?'on':'')+'" onclick="mealSel=\''+m+'\';renderAiResult()">'+m+'</button>';}).join('')+'</div>'+
+  aiPending.map(function(x,i){
+   return '<div class="fooditem"><div style="flex:1"><div style="font-size:14px;font-weight:600">'+esc(x.n)+'</div>'+
+    '<div class="xs muted">'+Math.round(x.k*x.q)+'kcal　P'+Math.round(x.p*x.q)+' F'+Math.round(x.f*x.q)+' C'+Math.round(x.c*x.q)+'</div></div>'+
+    '<div class="qty"><button onclick="aiQty('+i+',-0.5)">−</button><span style="font-size:13px;font-weight:700">'+x.q+'</span>'+
+    '<button onclick="aiQty('+i+',0.5)">＋</button><button class="delx" onclick="aiDel('+i+')">✕</button></div></div>';}).join('')+
+  '<div class="row between" style="margin-top:10px;font-weight:800"><span>合計</span>'+
+   '<span class="num">'+Math.round(tot.k)+'kcal　<span class="xs muted">P'+Math.round(tot.p)+' F'+Math.round(tot.f)+' C'+Math.round(tot.c)+'</span></span></div>'+
+  '<div class="xs muted" style="margin-top:8px;line-height:1.7">AIの推定なので±20%はズレます。'+
+   '<b>完璧を目指さないでください。</b>ゼロで放置するより、多少ズレた数字が7日並ぶほうが100倍役に立ちます。</div>'+
+  '<button class="btn" style="width:100%;margin-top:12px" onclick="aiCommit()">この内容で追加する</button>');}
+window.aiQty=function(i,d){aiPending[i].q=Math.max(0.5,Math.round((aiPending[i].q+d)*2)/2);renderAiResult();};
+window.aiDel=function(i){aiPending.splice(i,1);if(!aiPending.length){closeModal();return;}renderAiResult();};
+window.aiCommit=function(){const o=D(curDate),mn=mealSel||guessMeal();
+ aiPending.forEach(function(x){o.meals.push({n:x.n,k:x.k,p:x.p,f:x.f,c:x.c,q:x.q,meal:mn,sw:x.sw});});
+ aiPending=null;save();closeModal();render();toast('写真から '+mn+' に追加しました 📷');};
 window.addFood=function(id){const f=allFoods().find(x=>x.id===id);if(!f)return;
  D(curDate).meals.push({n:f.n,k:f.k,p:f.p,f:f.f,c:f.c,q:1,meal:mealSel||guessMeal(),sw:f.sw?1:0});
  save();toast(f.n+' を追加 ✓');};
@@ -1834,6 +1935,15 @@ function setTab(){
    const on=cur&&cur.n===c.n;
    return '<div class="row between"'+(on?' style="color:var(--accent);font-weight:800"':'')+'><span>'+(on?'▶ ':'　')+c.n+'</span><span class="num">〜'+c.kg+'kg</span></div>';}).join('')+
   '</div><div class="xs muted" style="margin-top:8px;line-height:1.7">'+P.height+'cmでウェルター級(66.7kg)は骨格的に削りすぎ。プロがあの数字を作れるのは計量前の脱水があるから。狙うのは<b>S・ウェルター〜ミドル級</b>のゾーンです。</div></div>'+
+ '<div class="card"><h3>📷 写真から食事を記録</h3>'+
+  '<div class="small" style="line-height:1.8">'+(aiKey()
+    ?'APIキー設定済み（<span class="num">'+aiKey().slice(0,10)+'…</span>）。食事タブの「📷 写真から記録する」が使えます。'
+    :'Anthropic APIのキーを入れると、食事タブで写真からPFCを推定できるようになります。')+'</div>'+
+  '<button class="ghost" style="width:100%;margin-top:10px" onclick="setAiKey()">'+(aiKey()?'APIキーを変更・削除':'APIキーを設定する')+'</button>'+
+  '<div class="xs muted" style="margin-top:9px;line-height:1.8">'+
+   '🔒 キーは<b>この端末のブラウザ内だけ</b>に保存されます。GitHubにもサーバーにも送られません。<br>'+
+   'キーの発行は console.anthropic.com → API Keys から。写真1枚あたり数円程度です。<br>'+
+   '<b>※ 推定は±20%はズレます。</b>正確さより、毎日記録が途切れないことを優先する道具です。</div></div>'+
  '<div class="card"><h3>週次トレーナー面談</h3>'+
   '<button class="btn" onclick="weeklyReview()">直近7日のレポートをコピー</button>'+
   '<div class="xs muted" style="margin-top:8px">コピーしたらClaudeに貼り付けてください。評価・問題点・来週の指示が返ってきます。</div></div>'+
