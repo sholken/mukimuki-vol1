@@ -1227,11 +1227,18 @@ function foodTab(){
    '<span class="chip" onclick="applySet('+i+')">⚡ '+esc(stt.name)+
    '<span style="margin-left:7px;color:var(--muted)" onclick="event.stopPropagation();delSetMeal('+i+')">✕</span></span>').join('')+'</div>':'')+
   (groups||'<div class="muted small" style="margin-top:10px">まだ記録がありません</div>')+
-  '<label class="btn" style="width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;cursor:pointer">'+
-   '📷 <span style="letter-spacing:1px;margin-left:6px">写真から記録する</span>'+
-   '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="photoMeal(event)"></label>'+
-  '<div class="xs muted" style="margin-top:6px;text-align:center">'+(aiKey()?'撮るか選ぶだけ。品名とPFCを推定して、あとで直せます':'APIキー設定済みなら1タップ。<span style="color:var(--accent)" onclick="setAiKey()">キーを設定 →</span>')+'</div>'+
-  '<button class="ghost" style="width:100%;margin-top:8px" onclick="pasteAiFlow()">📋 Claudeアプリの回答を貼り付ける（キー不要・無料）</button>'+
+  /* APIキーが無いときは、貼り付け経路を主動線にする（無料でそのまま使えるため） */
+  (aiKey()
+   ?'<label class="btn" style="width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;cursor:pointer">'+
+     '📷 <span style="letter-spacing:1px;margin-left:6px">写真から記録する</span>'+
+     '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="photoMeal(event)"></label>'+
+    '<div class="xs muted" style="margin-top:6px;text-align:center">撮るか選ぶだけ。品名とPFCを推定して、あとで直せます</div>'+
+    '<button class="ghost" style="width:100%;margin-top:8px" onclick="pasteAiFlow()">📋 Claudeアプリの回答を貼り付ける</button>'
+   :'<button class="btn" style="width:100%;margin-top:12px" onclick="pasteAiFlow()">📋 <span style="letter-spacing:1px">Claudeに写真を送って貼り付ける</span></button>'+
+    '<div class="xs muted" style="margin-top:6px;text-align:center">無料。Claudeアプリに写真を送って、返ってきたJSONを貼るだけ</div>'+
+    '<label class="ghost" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;cursor:pointer">'+
+     '📷 写真から直接（要APIキー）'+
+     '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="photoMeal(event)"></label>')+
   '<div class="row" style="margin-top:12px;gap:8px">'+
    '<button class="btn" style="flex:2" onclick="openFoodModal()">＋ 食品を追加</button>'+
    '<button class="ghost" style="flex:1" onclick="copyYesterday()">昨日コピー</button></div>'+
@@ -1345,10 +1352,13 @@ const AI_PROMPT='この食事写真を、日本の一般的な外食・中食・
  '{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で"}';
 window.pasteAiFlow=function(){
  openModal('<h3>📋 Claudeの回答を貼り付け</h3>'+
-  '<div class="small" style="line-height:1.9">APIキーなしで使う方法です。従量課金はかかりません。<br>'+
-  '① 下の「プロンプトをコピー」を押す<br>'+
+  '<div class="small" style="line-height:1.9">① 下の「プロンプトをコピー」を押す<br>'+
   '② <b>Claudeアプリ</b>を開いて、食事の写真と一緒に貼り付けて送信<br>'+
   '③ 返ってきたJSONをコピーして、下の欄に貼る</div>'+
+  '<div class="xs muted" style="margin-top:9px;padding:9px;border:1px solid var(--accent2);border-radius:10px;line-height:1.8">'+
+   '💡 <b style="color:var(--accent)">2回目からはプロンプト不要にできます</b><br>'+
+   'Claudeアプリで<b>プロジェクトを1つ作り</b>、このプロンプトを「プロジェクトの指示」に貼っておく。'+
+   'あとはそのプロジェクトに<b>写真を送るだけ</b>でJSONが返ってきます。毎回コピーしなくて済みます。</div>'+
   '<button class="ghost" style="width:100%;margin-top:10px" onclick="copyText(AI_PROMPT)">プロンプトをコピー</button>'+
   '<textarea id="aijson" style="width:100%;height:150px;font-size:13px;line-height:1.6;padding:10px;margin-top:10px" '+
    'placeholder=\'{"items":[{"n":"鶏の唐揚げ 5個","k":520,...}],"note":"..."}\'></textarea>'+
