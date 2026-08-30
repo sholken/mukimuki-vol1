@@ -136,6 +136,21 @@ nav button.on{color:var(--accent);}
   transition:opacity .25s,transform .25s;pointer-events:none;border:2px solid var(--accent2);
   box-shadow:0 8px 30px rgba(0,0,0,.6);text-align:center;max-width:80vw;}
 #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+#tab{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;
+  flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;}
+#tab.show{display:flex;}
+#tab .tphase{font-family:var(--num);font-size:15px;letter-spacing:4px;font-weight:600;}
+#tab .tbig{font-family:var(--num);font-size:min(38vw,180px);font-weight:600;line-height:1;margin:6px 0;}
+#tab .tround{font-size:14px;color:var(--muted);font-weight:700;letter-spacing:1px;}
+#tab .tex{font-size:12px;color:var(--muted);margin-bottom:14px;}
+#tab.work{color:var(--accent);} #tab.rest{color:var(--water);}
+#tab.prep{color:var(--muted);} #tab.done{color:var(--ok);}
+#tab .trow{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center;}
+#tab .trow button{background:var(--card2);border:1px solid var(--line);color:var(--txt);
+  border-radius:12px;padding:13px 20px;font-size:15px;font-weight:700;min-width:104px;}
+#tab .trow button.pri{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1A1407;border:none;}
+#tab .tbar{width:min(340px,84vw);height:6px;background:var(--card2);border-radius:99px;overflow:hidden;margin-top:16px;}
+#tab .tbar i{display:block;height:100%;background:currentColor;transition:width .25s linear;}
 #rest{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));z-index:40;display:none;
   justify-content:center;}
 #rest.show{display:flex;}
@@ -176,6 +191,7 @@ label.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--
 <div id="modal" onclick="if(event.target===this)closeModal()"><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
 <div id="rest"><div class="restbar" id="restbar"></div></div>
+<div id="tab"><div id="tabin"></div></div>
 
 <script>
 /* ================= データ ================= */
@@ -1233,9 +1249,11 @@ function foodTab(){
      '📷 <span style="letter-spacing:1px;margin-left:6px">写真から記録する</span>'+
      '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="photoMeal(event)"></label>'+
     '<div class="xs muted" style="margin-top:6px;text-align:center">撮るか選ぶだけ。品名とPFCを推定して、あとで直せます</div>'+
-    '<button class="ghost" style="width:100%;margin-top:8px" onclick="pasteAiFlow()">📋 Claudeアプリの回答を貼り付ける</button>'
+    '<button class="ghost" style="width:100%;margin-top:8px" onclick="pasteAiFlow()">📋 Claudeアプリの回答を貼り付ける</button>'+
+    '<button class="ghost" style="width:100%;margin-top:8px" onclick="textMealFlow()">✏️ 文字で入力（写真なし）</button>'
    :'<button class="btn" style="width:100%;margin-top:12px" onclick="pasteAiFlow()">📋 <span style="letter-spacing:1px">Claudeに写真を送って貼り付ける</span></button>'+
     '<div class="xs muted" style="margin-top:6px;text-align:center">無料。Claudeアプリに写真を送って、返ってきたJSONを貼るだけ</div>'+
+    '<button class="ghost" style="width:100%;margin-top:8px" onclick="textMealFlow()">✏️ 文字で入力（写真なし）</button>'+
     '<label class="ghost" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;cursor:pointer">'+
      '📷 写真から直接（要APIキー）'+
      '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="photoMeal(event)"></label>')+
@@ -1297,7 +1315,7 @@ function shrinkImage(file,maxPx){return new Promise(function(res,rej){
   res(cv.toDataURL('image/jpeg',0.8).split(',')[1]);};
  img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('画像を読めませんでした'));};
  img.src=url;});}
-let aiLastImg=null;   /* 再推定のために直近の画像を保持 */
+let aiLastImg=null,aiLastText=null;   /* 再推定のために直近の入力を保持 */
 function aiCall(b64,extra){
  return fetch('https://api.anthropic.com/v1/messages',{
   method:'POST',
@@ -1350,7 +1368,7 @@ let aiPending=null,aiNote='',aiAsk='';
 /* 中身が見えない料理（パイ包み・蓋つき・丼の具の下など）は推測させず、本人に聞く。
    ここを推測で埋めると、8月と同じ過少記録を機械にやらせることになる。 */
 function renderAiAsk(){
- const canRetry=!!(aiLastImg&&aiKey());
+ const canRetry=!!((aiLastImg||aiLastText)&&aiKey());
  openModal('<h3>❓ 写真だけでは決められません</h3>'+
   '<div class="small" style="line-height:1.9;padding:10px;border:1px solid var(--accent2);border-radius:10px">'+esc(aiAsk)+'</div>'+
   (aiPending&&aiPending.length?'<div class="xs muted" style="margin-top:9px">※判別できた分（'+aiPending.length+'品）は先に読み込んであります</div>':'')+
@@ -1367,31 +1385,36 @@ function renderAiAsk(){
 window.aiAnswer=function(){
  const e=document.getElementById('aians');const v=e?e.value.trim():'';
  if(!v){toast('答えを入力してください');return;}
- openModal('<h3>📷 再推定中…</h3><div class="small muted" style="line-height:1.9">補足情報を足して計算し直しています。</div>');
- aiCall(aiLastImg,v).then(function(d){aiAsk='';d.ask='';aiIngest(d);})
+ openModal('<h3>再推定中…</h3><div class="small muted" style="line-height:1.9">補足情報を足して計算し直しています。</div>');
+ const req=aiLastImg?aiCall(aiLastImg,v):aiCallText(aiLastText,v);
+ req.then(function(d){aiAsk='';d.ask='';aiIngest(d);})
   .catch(function(err){openModal('<h3>うまくいきませんでした</h3><div class="small">'+esc(err.message)+'</div>'+
    '<button class="btn" style="width:100%;margin-top:12px" onclick="closeModal()">閉じる</button>');});};
 /* ===== APIキーを使わない経路 =====
    CLIはMac上でしか動かず、iPhoneのSafariからは呼べない。
    代わりに「Claudeアプリに写真を送る→返ってきたJSONを貼る」経路を用意する。
    これならサブスクの範囲で完結し、従量課金がかからない。 */
-const AI_PROMPT='この食事写真を、日本の一般的な外食・中食・自炊の常識的な分量で推定してください。\n'+
+const AI_PROMPT='この食事（写真、または文字で書かれた説明）を、日本の一般的な外食・中食・自炊の常識的な分量で推定してください。\n'+
  '重要：調理油、ドレッシング、マヨネーズ、タレ、砂糖、飲み物を必ず見積もりに含めてください。'+
  'これらの見落としが過少記録の最大原因です。迷ったら多めに見積もってください。\n'+
  '揚げ物の衣が吸った油、炒め物の油、ラーメンのスープの脂も忘れずに。\n\n'+
-'【推定できないときは推測しない】\\n'+
- '中身が見えない料理（パイ包み、蓋つきの器、包み焼き、丼の具の下、鍋の中、\\n'+
- '不透明なスープ、持ち帰り容器など）や、調理法・量が判別できず\\n'+
- 'カロリーの見積もりが2倍近くぶれる場合は、推測で数字を出さないでください。\\n'+
- 'そのときは items を空にして、ask に質問を書いてください。\\n'+
- '例：「パイの中身は何ですか？（ビーフシチュー／クリームシチュー／オニオンスープ など）」\\n'+
- '質問は1〜2個までに絞り、必ず選択肢の例を添えること。\\n'+
- '判別できる品目だけは items に入れて構いません（その場合も ask は書く）。\\n\\n'+
+'【推測してはいけない場合】\n'+
+ '次のどれかに当てはまり、カロリーが1.5倍以上ぶれるなら、推測で数字を出さないでください。\n'+
+ '(a) 中身が見えない：パイ包み、蓋つきの器、包み焼き、丼の具の下、鍋の中、不透明なスープ、持ち帰り容器\n'+
+ '(b) 種類が特定できない：ラーメン(醤油/味噌/豚骨/家系/二郎系で2-3倍違う)、カレー、パスタ、定食\n'+
+ '(c) サイズが分からない：ドリンク(Short/Tall/Grande/Venti)、丼(並/大盛/特盛)、麺(並/大盛/替玉)、ごはんの量\n'+
+ '(d) 甘い飲み物の中身：ミルクの種類、シロップの量、ホイップの有無\n'+
+ 'そのときは items を空にして、ask に質問を書いてください。\n'+
+ '例：「ラーメンの種類とサイズは？（醤油/味噌/豚骨/家系、並/大盛/替玉あり）」\n'+
+ '例：「スタバのサイズとミルク・ホイップは？（Tall/Grande、無脂肪乳/豆乳、ホイップ有無）」\n'+
+ '質問は1〜2個までに絞り、必ず選択肢の例を添えること。\n'+
+ '判別できる品目だけは items に入れて構いません（その場合も ask は書く）。\n\n'+
  'JSONだけを返してください。前置きも説明も不要です。形式：\n'+
  '{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で","ask":"分からない点の質問。無ければ空文字"}';
 const AI_PROJECT_PROMPT=
-'あなたは食事写真からPFCを推定する専用アシスタントです。\n'+
-'写真が送られてきたら、挨拶も前置きも説明も一切書かず、JSONだけを返してください。\n\n'+
+'あなたは食事のPFCを推定する専用アシスタントです。\n'+
+'食事の写真、または「マクドナルドのハンバーガーセット」のような文字だけの説明が送られてきたら、\n'+
+'挨拶も前置きも説明も一切書かず、JSONだけを返してください。\n\n'+
 '【推定の原則】\n'+
 '・日本の一般的な外食・中食・自炊の常識的な分量で見積もる\n'+
 '・調理油、ドレッシング、マヨネーズ、タレ、砂糖、飲み物を必ず含める。これらの見落としが過少記録の最大原因\n'+
@@ -1399,14 +1422,58 @@ const AI_PROJECT_PROMPT=
 '・迷ったら多めに見積もる\n'+
 '・複数の皿が写っていれば1品ずつ分けて出す\n\n'+
 '【推測してはいけない場合】\n'+
-'中身が見えない料理（パイ包み、蓋つきの器、包み焼き、丼の具の下、鍋の中、不透明なスープ、持ち帰り容器など）や、\n'+
-'調理法・量が判別できずカロリーが2倍近くぶれる場合は、推測で数字を出さないこと。\n'+
+'次のどれかで、カロリーが1.5倍以上ぶれるなら推測しないこと。\n'+
+'(a) 中身が見えない：パイ包み、蓋つき、包み焼き、丼の具の下、鍋、不透明なスープ、持ち帰り容器\n'+
+'(b) 種類が特定できない：ラーメン(醤油/味噌/豚骨/家系/二郎系で2-3倍違う)、カレー、パスタ、定食\n'+
+'(c) サイズが分からない：ドリンク(Short/Tall/Grande/Venti)、丼(並/大盛/特盛)、麺(並/大盛/替玉)、ごはんの量\n'+
+'(d) 甘い飲み物：ミルクの種類、シロップの量、ホイップの有無\n'+
 'items を空にして ask に質問を書く。質問は1〜2個までに絞り、必ず選択肢の例を添える。\n'+
 '例：「パイの中身は何ですか？（ビーフシチュー／クリームシチュー／オニオンスープ など）」\n'+
 '判別できる品目だけは items に入れてよい（その場合も ask は書く）。\n'+
 'ユーザーが答えたら、その情報を使って改めてJSONを返す。\n\n'+
 '【出力形式】これ以外は何も書かない\n'+
 '{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で","ask":"分からない点の質問。無ければ空文字"}';
+/* 写真がなくても、店名とメニュー名だけで推定させる。
+   「マクドナルドのハンバーガーセット」を毎回検索して手入力するのが面倒、という要望への対応。 */
+window.textMealFlow=function(){
+ openModal('<h3>✏️ 文字で入力</h3>'+
+  '<div class="small" style="line-height:1.8">店名やメニュー名を書くだけでOK。写真は要りません。</div>'+
+  '<div class="xs muted" style="margin-top:6px;line-height:1.8">例）マクドナルドのハンバーガーセット（ポテトM・コーラM）<br>'+
+  '例）スタバ キャラメルマキアート Tall ホイップあり<br>例）家系ラーメン 並 ライス小</div>'+
+  '<textarea id="aitxt" style="width:100%;height:100px;font-size:15px;line-height:1.7;padding:10px;margin-top:10px" '+
+   'placeholder="食べたものを書く"></textarea>'+
+  (aiKey()
+   ?'<button class="btn" style="width:100%;margin-top:10px" onclick="textMealGo()">推定する</button>'
+   :'<button class="ghost" style="width:100%;margin-top:10px" onclick="textMealCopy()">📋 プロンプト＋この内容をコピー</button>'+
+    '<div class="xs muted" style="margin-top:8px;line-height:1.8">Claudeアプリに貼って送信 → 返ってきたJSONを「貼り付け」から読み込んでください。</div>'+
+    '<button class="ghost" style="width:100%;margin-top:8px" onclick="pasteAiFlow()">貼り付け画面へ</button>'));
+ setTimeout(function(){const e=document.getElementById('aitxt');if(e)e.focus();},80);};
+window.textMealCopy=function(){const e=document.getElementById('aitxt');
+ const v=e?e.value.trim():'';if(!v){toast('内容を書いてください');return;}
+ copyText(AI_PROMPT+'\n\n【食事の内容】\n'+v);};
+function aiCallText(desc,extra){
+ return fetch('https://api.anthropic.com/v1/messages',{
+  method:'POST',
+  headers:{'content-type':'application/json','x-api-key':aiKey(),
+   'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model:AI_MODEL,max_tokens:1200,
+   messages:[{role:'user',content:AI_PROMPT+'\n\n【食事の内容】\n'+desc+
+    (extra?'\n\n【本人からの補足情報】\n'+extra+'\nこの情報を使って確定した数字を出してください。もう質問は不要です。':'')}]})
+ }).then(function(r){
+  if(!r.ok)return r.text().then(function(t){throw new Error('API '+r.status+'：'+t.slice(0,200));});
+  return r.json();
+ }).then(function(j){
+  const txt=(j.content||[]).map(function(c){return c.text||'';}).join('');
+  const m=txt.match(/{[\s\S]*}/);
+  if(!m)throw new Error('推定結果を読み取れませんでした：'+txt.slice(0,120));
+  return JSON.parse(m[0]);});}
+window.textMealGo=function(){const e=document.getElementById('aitxt');
+ const v=e?e.value.trim():'';if(!v){toast('内容を書いてください');return;}
+ aiLastText=v;aiLastImg=null;
+ openModal('<h3>✏️ 推定中…</h3><div class="small muted" style="line-height:1.9">'+esc(v)+'</div>');
+ aiCallText(v,null).then(function(d){aiIngest(d);})
+  .catch(function(err){openModal('<h3>うまくいきませんでした</h3><div class="small">'+esc(err.message)+'</div>'+
+   '<button class="btn" style="width:100%;margin-top:12px" onclick="closeModal()">閉じる</button>');});};
 window.pasteAiFlow=function(){
  openModal('<h3>📋 Claudeの回答を貼り付け</h3>'+
   '<div class="small" style="line-height:1.9">① 下の「プロンプトをコピー」を押す<br>'+
@@ -1667,6 +1734,7 @@ function trainTab(){
         '<span style="color:var(--accent);font-weight:800">📌 メモ</span>　'+esc(nt)+
         '<span class="muted"> ・タップで編集</span></div>';
       return '<div class="xs muted" style="margin-top:8px;text-align:right;cursor:pointer" onclick="editExNote(\''+esc2+'\')">📝 メモを追加（座席位置・足幅・可動域など、次回も残ります）</div>';})()+
+    (tabPreset(ex)?'<button class="ghost" style="margin-top:8px;width:100%;border-color:var(--accent2);color:var(--accent)" onclick="openTabata(\''+esc(ex).replace(/'/g,"\\'")+'\')">⏱ インターバルタイマー</button>':'')+
     '<button class="ghost" style="margin-top:8px;width:100%" onclick="addSet(\''+ex+'\')">＋ セット追加</button>'+
    '</div>';
   }).join('')+
@@ -1751,6 +1819,132 @@ document.addEventListener('pointercancel',endDrag);
 window.toggleSet=function(ex,i){const wk=ensureWk();const s=wk.logs[ex][i];if(!s)return;
  const turningOn=!s.d;s.d=s.d?0:1;saveR();
  if(turningOn){const r=exRest(ex);if(r>0)startRest(ex,r);}};
+
+/* ===== インターバルタイマー（縄跳び・バイク・タバタ） =====
+   別アプリを開かずに済ませるため内蔵する。終了時にそのままセットを記録できる。
+   音は既存の beep() と同じ AudioContext を使い、iOSの自動再生制限を避けるため
+   「開始」タップの中で必ず一度 resume() する。 */
+let tabState=null;
+function tone(freq,dur,when){try{if(!restAudio)restAudio=new (window.AudioContext||window.webkitAudioContext)();
+ const c=restAudio;if(c.state==='suspended')c.resume();
+ const o=c.createOscillator(),g=c.createGain();o.frequency.value=freq;
+ o.connect(g);g.connect(c.destination);const t0=c.currentTime+(when||0);
+ g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(0.3,t0+0.01);
+ g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);o.start(t0);o.stop(t0+dur+0.02);}catch(e){}}
+function buzz(pat){if(navigator.vibrate)try{navigator.vibrate(pat);}catch(e){}}
+/* 種目からタイマーの設定を決める */
+function tabPreset(ex){
+ if(ex==='縄跳び(3分ラウンド)'){
+  const rp=ropeFor(curDate,new Date(curDate+'T00:00:00').getDay()===5);
+  if(!rp)return null;
+  return {ex:ex,work:rp.sec,rest:60,rounds:rp.sets,prep:10,label:'WEEK'+rp.week+'の指定'};}
+ if(ex==='バイクインターバル')return {ex:ex,work:120,rest:120,rounds:4,prep:20,label:'RPE7-8で4-6本'};
+ if(ex==='ランニングインターバル')return {ex:ex,work:120,rest:120,rounds:4,prep:20,label:'RPE8で4-6本'};
+ if(ex==='HIIT(20秒×8)')return {ex:ex,work:20,rest:10,rounds:8,prep:15,label:'タバタ式'};
+ const g=EXDB[ex];if(!g)return null;
+ const m=g.sr&&g.sr.match(/(\d+)セット×(\d+)(?:-(\d+))?/);
+ if(!m)return null;
+ const unit=exUnit(ex);
+ if(unit!=='秒'&&unit!=='分')return null;
+ const w=parseInt(m[2])*(unit==='分'?60:1);
+ return {ex:ex,work:w,rest:exRest(ex)||45,rounds:parseInt(m[1]),prep:10,label:g.sr};}
+window.openTabata=function(ex){
+ const pre=tabPreset(ex)||{ex:ex,work:60,rest:60,rounds:4,prep:10,label:''};
+ tabState={ex:pre.ex,work:pre.work,rest:pre.rest,rounds:pre.rounds,prep:pre.prep,
+  label:pre.label,phase:'setup',round:1,endAt:0,id:null,done:0};
+ document.getElementById('tab').classList.add('show');renderTab();};
+window.tabAdj=function(f,d){if(!tabState)return;
+ const lim={work:[5,600],rest:[0,600],rounds:[1,20]};
+ tabState[f]=Math.max(lim[f][0],Math.min(lim[f][1],tabState[f]+d));renderTab();};
+window.tabStart=function(){if(!tabState)return;
+ tone(660,0.08); /* iOSの音声解禁のため、必ずタップの中で1回鳴らす */
+ tabState.phase=tabState.prep>0?'prep':'work';tabState.round=1;
+ tabState.endAt=Date.now()+(tabState.prep>0?tabState.prep:tabState.work)*1000;
+ if(tabState.id)clearInterval(tabState.id);
+ tabState.id=setInterval(tabTick,200);renderTab();};
+window.tabPause=function(){if(!tabState||tabState.phase==='setup'||tabState.phase==='done')return;
+ if(tabState.paused){tabState.endAt=Date.now()+tabState.paused*1000;tabState.paused=null;
+  tabState.id=setInterval(tabTick,200);}
+ else{tabState.paused=Math.max(0,(tabState.endAt-Date.now())/1000);
+  if(tabState.id){clearInterval(tabState.id);tabState.id=null;}}
+ renderTab();};
+window.tabSkip=function(){if(!tabState||tabState.phase==='setup')return;tabState.endAt=Date.now();tabTick();};
+window.tabClose=function(){if(tabState&&tabState.id)clearInterval(tabState.id);
+ tabState=null;document.getElementById('tab').classList.remove('show');render();};
+function tabRem(){if(!tabState)return 0;
+ if(tabState.paused!=null)return Math.ceil(tabState.paused);
+ return Math.max(0,Math.ceil((tabState.endAt-Date.now())/1000));}
+function tabTick(){if(!tabState)return;
+ const rem=tabRem();
+ if(rem>0){ /* 残り3秒からカウントダウン音 */
+  if(tabState.lastSec!==rem){tabState.lastSec=rem;
+   if(rem<=3&&tabState.phase!=='done')tone(rem===1?990:660,0.07);}
+  renderTab();return;}
+ if(tabState.phase==='prep'){tabState.phase='work';tabState.endAt=Date.now()+tabState.work*1000;
+  tone(990,0.18);buzz([180]);}
+ else if(tabState.phase==='work'){
+  tabState.done=tabState.round;
+  if(tabState.round>=tabState.rounds){tabState.phase='done';
+   if(tabState.id){clearInterval(tabState.id);tabState.id=null;}
+   tone(880,0.16,0);tone(1100,0.16,0.2);tone(1320,0.3,0.4);buzz([200,100,200,100,300]);}
+  else if(tabState.rest>0){tabState.phase='rest';tabState.endAt=Date.now()+tabState.rest*1000;
+   tone(520,0.2);buzz([120,80,120]);}
+  else{tabState.round++;tabState.endAt=Date.now()+tabState.work*1000;tone(990,0.18);buzz([180]);}}
+ else if(tabState.phase==='rest'){tabState.round++;tabState.phase='work';
+  tabState.endAt=Date.now()+tabState.work*1000;tone(990,0.18);buzz([180]);}
+ renderTab();}
+function tabFmt(s){const m=Math.floor(s/60),ss=('0'+(s%60)).slice(-2);return m>0?m+':'+ss:String(s);}
+function renderTab(){const el=document.getElementById('tab'),box=document.getElementById('tabin');
+ if(!tabState)return;
+ const st=tabState;
+ el.className='show '+(st.phase==='setup'?'prep':st.phase);
+ if(st.phase==='setup'){
+  const adj=function(f,label,step,fmt){return '<div class="row between" style="width:min(340px,84vw);margin:7px 0">'+
+    '<span class="small" style="color:var(--txt)">'+label+'</span>'+
+    '<span class="row" style="gap:8px"><button class="stepbtn" onclick="tabAdj(\''+f+'\','+(-step)+')">−</button>'+
+    '<span class="num" style="font-size:22px;color:var(--accent);min-width:70px">'+fmt(st[f])+'</span>'+
+    '<button class="stepbtn" onclick="tabAdj(\''+f+'\','+step+')">＋</button></span></div>';};
+  box.innerHTML='<div class="tphase">INTERVAL TIMER</div>'+
+   '<div class="tex" style="margin-top:8px;font-size:14px;color:var(--txt);font-weight:700">'+esc(st.ex)+'</div>'+
+   (st.label?'<div class="tex">'+esc(st.label)+'</div>':'')+
+   adj('work','運動',5,function(v){return tabFmt(v);})+
+   adj('rest','レスト',5,function(v){return v===0?'なし':tabFmt(v);})+
+   adj('rounds','ラウンド',1,function(v){return v+'本';})+
+   '<div class="xs muted" style="margin-top:10px">合計 約'+
+    tabFmt(st.prep+st.rounds*st.work+(st.rounds-1)*st.rest)+'</div>'+
+   '<div class="trow"><button onclick="tabClose()">閉じる</button>'+
+   '<button class="pri" onclick="tabStart()">▶ スタート</button></div>'+
+   '<div class="xs muted" style="margin-top:14px;line-height:1.7;max-width:300px">'+
+   '画面を開いたままにしてください。音とバイブでラウンドの切り替わりを知らせます。</div>';
+  return;}
+ const rem=tabRem();
+ const total=st.phase==='prep'?st.prep:(st.phase==='rest'?st.rest:st.work);
+ const pct=st.phase==='done'?100:Math.max(0,Math.min(100,(1-rem/Math.max(1,total))*100));
+ const nm={prep:'READY',work:'WORK',rest:'REST',done:'FINISH'}[st.phase];
+ box.innerHTML='<div class="tphase">'+nm+'</div>'+
+  '<div class="tbig">'+(st.phase==='done'?'✓':tabFmt(rem))+'</div>'+
+  '<div class="tround">'+(st.phase==='done'
+    ?st.rounds+'ラウンド完了'
+    :'ROUND '+st.round+' / '+st.rounds)+'</div>'+
+  '<div class="tex">'+esc(st.ex)+'</div>'+
+  (st.phase==='done'?'':'<div class="tbar"><i style="width:'+pct+'%"></i></div>')+
+  '<div class="trow">'+
+   (st.phase==='done'
+    ?'<button onclick="tabClose()">閉じる</button><button class="pri" onclick="tabLog()">記録する</button>'
+    :'<button onclick="tabPause()">'+(st.paused!=null?'▶ 再開':'⏸ 一時停止')+'</button>'+
+     '<button onclick="tabSkip()">スキップ ›</button>'+
+     '<button onclick="tabClose()">やめる</button>')+
+  '</div>'+
+  (st.phase==='done'?'<div class="xs muted" style="margin-top:14px;line-height:1.7;max-width:300px">'+
+   '「記録する」で '+st.done+'ラウンド × '+tabFmt(st.work)+' がそのまま入ります</div>':'');}
+window.tabLog=function(){if(!tabState)return;
+ const st=tabState,wk=ensureWk();
+ if(!wk.logs[st.ex])wk.logs[st.ex]=[];
+ const unit=exUnit(st.ex);
+ const val=unit==='分'?Math.round(st.work/60*10)/10:st.work;
+ for(let i=0;i<st.done;i++)wk.logs[st.ex].push({r:val,d:1});
+ save();tabClose();toast(st.done+'ラウンドを記録しました 🥊');};
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&tabState&&tabState.id)tabTick();});
 
 /* ===== レストタイマー ===== */
 let restState=null,restAudio=null;
