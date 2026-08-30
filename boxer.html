@@ -1297,6 +1297,33 @@ function shrinkImage(file,maxPx){return new Promise(function(res,rej){
   res(cv.toDataURL('image/jpeg',0.8).split(',')[1]);};
  img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('画像を読めませんでした'));};
  img.src=url;});}
+let aiLastImg=null;   /* 再推定のために直近の画像を保持 */
+function aiCall(b64,extra){
+ return fetch('https://api.anthropic.com/v1/messages',{
+  method:'POST',
+  headers:{'content-type':'application/json','x-api-key':aiKey(),
+   'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model:AI_MODEL,max_tokens:1200,
+   messages:[{role:'user',content:[
+    {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+    {type:'text',text:AI_PROMPT+(extra?'\n\n【本人からの補足情報】\n'+extra+'\nこの情報を使って確定した数字を出してください。もう質問は不要です。':'')}
+   ]}]})
+ }).then(function(r){
+  if(!r.ok)return r.text().then(function(t){throw new Error('API '+r.status+'：'+t.slice(0,200));});
+  return r.json();
+ }).then(function(j){
+  const txt=(j.content||[]).map(function(c){return c.text||'';}).join('');
+  const m=txt.match(/\{[\s\S]*\}/);
+  if(!m)throw new Error('推定結果を読み取れませんでした：'+txt.slice(0,120));
+  return JSON.parse(m[0]);});}
+function aiIngest(d){
+ aiPending=(d.items||[]).map(function(x){return {n:String(x.n||'不明').slice(0,20),
+  k:Math.max(0,Math.round(+x.k||0)),p:Math.round((+x.p||0)*10)/10,
+  f:Math.round((+x.f||0)*10)/10,c:Math.round((+x.c||0)*10)/10,sw:x.sw?1:0,q:1};});
+ aiNote=d.note||'';aiAsk=(d.ask||'').trim();
+ if(aiAsk){renderAiAsk();return;}
+ if(!aiPending.length)throw new Error('食べ物を認識できませんでした');
+ renderAiResult();}
 window.photoMeal=function(ev){
  const file=ev.target.files&&ev.target.files[0];ev.target.value='';
  if(!file)return;
@@ -1311,35 +1338,39 @@ window.photoMeal=function(ev){
  openModal('<h3>📷 写真を解析中…</h3><div class="small muted" style="line-height:1.9">'+
   '皿の上のものを1品ずつ推定しています。<br>油・ドレッシング・調味料も見積もりに入れています（ここが抜けるのが過少記録の主因なので）。<br><br>10〜20秒ほどかかります。</div>');
  shrinkImage(file,1024).then(function(b64){
-  return fetch('https://api.anthropic.com/v1/messages',{
-   method:'POST',
-   headers:{'content-type':'application/json','x-api-key':aiKey(),
-    'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-   body:JSON.stringify({model:AI_MODEL,max_tokens:1200,
-    messages:[{role:'user',content:[
-     {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-     {type:'text',text:AI_PROMPT}
-    ]}]})});
- }).then(function(r){
-  if(!r.ok)return r.text().then(function(t){throw new Error('API '+r.status+'：'+t.slice(0,200));});
-  return r.json();
- }).then(function(j){
-  const txt=(j.content||[]).map(function(c){return c.text||'';}).join('');
-  const m=txt.match(/\{[\s\S]*\}/);
-  if(!m)throw new Error('推定結果を読み取れませんでした：'+txt.slice(0,120));
-  const d=JSON.parse(m[0]);
-  aiPending=(d.items||[]).map(function(x){return {n:String(x.n||'不明').slice(0,20),
-   k:Math.max(0,Math.round(+x.k||0)),p:Math.round((+x.p||0)*10)/10,
-   f:Math.round((+x.f||0)*10)/10,c:Math.round((+x.c||0)*10)/10,sw:x.sw?1:0,q:1};});
-  aiNote=d.note||'';
-  if(!aiPending.length)throw new Error('食べ物を認識できませんでした');
-  renderAiResult();
+  aiLastImg=b64;return aiCall(b64,null);
+ }).then(function(d){
+  aiIngest(d);
  }).catch(function(e){
   openModal('<h3>うまくいきませんでした</h3><div class="small" style="line-height:1.8">'+esc(e.message)+
    '</div><div class="xs muted" style="margin-top:10px;line-height:1.8">キーが正しいか、通信が繋がっているか確認してください。'+
    'それでもダメなら、いつもどおり手入力で大丈夫です。<b>記録が0になるよりはるかにマシです。</b></div>'+
    '<button class="btn" style="width:100%;margin-top:12px" onclick="closeModal()">閉じる</button>');});};
-let aiPending=null,aiNote='';
+let aiPending=null,aiNote='',aiAsk='';
+/* 中身が見えない料理（パイ包み・蓋つき・丼の具の下など）は推測させず、本人に聞く。
+   ここを推測で埋めると、8月と同じ過少記録を機械にやらせることになる。 */
+function renderAiAsk(){
+ const canRetry=!!(aiLastImg&&aiKey());
+ openModal('<h3>❓ 写真だけでは決められません</h3>'+
+  '<div class="small" style="line-height:1.9;padding:10px;border:1px solid var(--accent2);border-radius:10px">'+esc(aiAsk)+'</div>'+
+  (aiPending&&aiPending.length?'<div class="xs muted" style="margin-top:9px">※判別できた分（'+aiPending.length+'品）は先に読み込んであります</div>':'')+
+  '<textarea id="aians" style="width:100%;height:90px;font-size:15px;line-height:1.7;padding:10px;margin-top:10px" '+
+   'placeholder="例）ビーフシチューのパイ包み。器は直径15cmくらい"></textarea>'+
+  (canRetry
+   ?'<button class="btn" style="width:100%;margin-top:10px" onclick="aiAnswer()">答えて、もう一度推定する</button>'
+   :'<button class="ghost" style="width:100%;margin-top:10px" onclick="copyText(aiAsk)">質問をコピー</button>'+
+    '<div class="xs muted" style="margin-top:8px;line-height:1.8">Claudeアプリのその会話に答えを返信すると、確定したJSONが返ってきます。'+
+    'それをコピーして、下の「貼り付けからやり直す」で読み込んでください。</div>'+
+    '<button class="ghost" style="width:100%;margin-top:8px" onclick="pasteAiFlow()">貼り付けからやり直す</button>')+
+  (aiPending&&aiPending.length?'<button class="ghost" style="width:100%;margin-top:8px" onclick="aiAsk=\'\';renderAiResult()">分かる分だけで進める</button>':''));
+ setTimeout(function(){const e=document.getElementById('aians');if(e)e.focus();},80);}
+window.aiAnswer=function(){
+ const e=document.getElementById('aians');const v=e?e.value.trim():'';
+ if(!v){toast('答えを入力してください');return;}
+ openModal('<h3>📷 再推定中…</h3><div class="small muted" style="line-height:1.9">補足情報を足して計算し直しています。</div>');
+ aiCall(aiLastImg,v).then(function(d){aiAsk='';d.ask='';aiIngest(d);})
+  .catch(function(err){openModal('<h3>うまくいきませんでした</h3><div class="small">'+esc(err.message)+'</div>'+
+   '<button class="btn" style="width:100%;margin-top:12px" onclick="closeModal()">閉じる</button>');});};
 /* ===== APIキーを使わない経路 =====
    CLIはMac上でしか動かず、iPhoneのSafariからは呼べない。
    代わりに「Claudeアプリに写真を送る→返ってきたJSONを貼る」経路を用意する。
@@ -1348,8 +1379,16 @@ const AI_PROMPT='この食事写真を、日本の一般的な外食・中食・
  '重要：調理油、ドレッシング、マヨネーズ、タレ、砂糖、飲み物を必ず見積もりに含めてください。'+
  'これらの見落としが過少記録の最大原因です。迷ったら多めに見積もってください。\n'+
  '揚げ物の衣が吸った油、炒め物の油、ラーメンのスープの脂も忘れずに。\n\n'+
+'【推定できないときは推測しない】\\n'+
+ '中身が見えない料理（パイ包み、蓋つきの器、包み焼き、丼の具の下、鍋の中、\\n'+
+ '不透明なスープ、持ち帰り容器など）や、調理法・量が判別できず\\n'+
+ 'カロリーの見積もりが2倍近くぶれる場合は、推測で数字を出さないでください。\\n'+
+ 'そのときは items を空にして、ask に質問を書いてください。\\n'+
+ '例：「パイの中身は何ですか？（ビーフシチュー／クリームシチュー／オニオンスープ など）」\\n'+
+ '質問は1〜2個までに絞り、必ず選択肢の例を添えること。\\n'+
+ '判別できる品目だけは items に入れて構いません（その場合も ask は書く）。\\n\\n'+
  'JSONだけを返してください。前置きも説明も不要です。形式：\n'+
- '{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で"}';
+ '{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で","ask":"分からない点の質問。無ければ空文字"}';
 const AI_PROJECT_PROMPT=
 'あなたは食事写真からPFCを推定する専用アシスタントです。\n'+
 '写真が送られてきたら、挨拶も前置きも説明も一切書かず、JSONだけを返してください。\n\n'+
@@ -1359,8 +1398,15 @@ const AI_PROJECT_PROMPT=
 '・揚げ物の衣が吸った油、炒め物の油、ラーメンのスープの脂も忘れない\n'+
 '・迷ったら多めに見積もる\n'+
 '・複数の皿が写っていれば1品ずつ分けて出す\n\n'+
+'【推測してはいけない場合】\n'+
+'中身が見えない料理（パイ包み、蓋つきの器、包み焼き、丼の具の下、鍋の中、不透明なスープ、持ち帰り容器など）や、\n'+
+'調理法・量が判別できずカロリーが2倍近くぶれる場合は、推測で数字を出さないこと。\n'+
+'items を空にして ask に質問を書く。質問は1〜2個までに絞り、必ず選択肢の例を添える。\n'+
+'例：「パイの中身は何ですか？（ビーフシチュー／クリームシチュー／オニオンスープ など）」\n'+
+'判別できる品目だけは items に入れてよい（その場合も ask は書く）。\n'+
+'ユーザーが答えたら、その情報を使って改めてJSONを返す。\n\n'+
 '【出力形式】これ以外は何も書かない\n'+
-'{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で"}';
+'{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で","ask":"分からない点の質問。無ければ空文字"}';
 window.pasteAiFlow=function(){
  openModal('<h3>📋 Claudeの回答を貼り付け</h3>'+
   '<div class="small" style="line-height:1.9">① 下の「プロンプトをコピー」を押す<br>'+
@@ -1390,8 +1436,10 @@ window.aiJsonParse=function(){const e=document.getElementById('aijson');if(!e)re
  const items=(d.items||[]).map(function(x){return {n:String(x.n||'不明').slice(0,20),
   k:Math.max(0,Math.round(+x.k||0)),p:Math.round((+x.p||0)*10)/10,
   f:Math.round((+x.f||0)*10)/10,c:Math.round((+x.c||0)*10)/10,sw:x.sw?1:0,q:1};});
+ aiPending=items;aiNote=d.note||'';aiAsk=(d.ask||'').trim();
+ if(aiAsk){aiLastImg=null;renderAiAsk();return;}
  if(!items.length){toast('itemsが空です');return;}
- aiPending=items;aiNote=d.note||'';renderAiResult();};
+ renderAiResult();};
 function renderAiResult(){
  const tot=aiPending.reduce(function(a,x){return {k:a.k+x.k*x.q,p:a.p+x.p*x.q,f:a.f+x.f*x.q,c:a.c+x.c*x.q};},{k:0,p:0,f:0,c:0});
  openModal('<h3>📷 推定結果　<span class="xs muted">直せます</span></h3>'+
