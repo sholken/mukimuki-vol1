@@ -1350,6 +1350,17 @@ const AI_PROMPT='この食事写真を、日本の一般的な外食・中食・
  '揚げ物の衣が吸った油、炒め物の油、ラーメンのスープの脂も忘れずに。\n\n'+
  'JSONだけを返してください。前置きも説明も不要です。形式：\n'+
  '{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で"}';
+const AI_PROJECT_PROMPT=
+'あなたは食事写真からPFCを推定する専用アシスタントです。\n'+
+'写真が送られてきたら、挨拶も前置きも説明も一切書かず、JSONだけを返してください。\n\n'+
+'【推定の原則】\n'+
+'・日本の一般的な外食・中食・自炊の常識的な分量で見積もる\n'+
+'・調理油、ドレッシング、マヨネーズ、タレ、砂糖、飲み物を必ず含める。これらの見落としが過少記録の最大原因\n'+
+'・揚げ物の衣が吸った油、炒め物の油、ラーメンのスープの脂も忘れない\n'+
+'・迷ったら多めに見積もる\n'+
+'・複数の皿が写っていれば1品ずつ分けて出す\n\n'+
+'【出力形式】これ以外は何も書かない\n'+
+'{"items":[{"n":"品名(15文字以内)","k":カロリー,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"sw":甘い物なら1でなければ0}],"note":"推定の前提を30文字以内で"}';
 window.pasteAiFlow=function(){
  openModal('<h3>📋 Claudeの回答を貼り付け</h3>'+
   '<div class="small" style="line-height:1.9">① 下の「プロンプトをコピー」を押す<br>'+
@@ -1358,8 +1369,10 @@ window.pasteAiFlow=function(){
   '<div class="xs muted" style="margin-top:9px;padding:9px;border:1px solid var(--accent2);border-radius:10px;line-height:1.8">'+
    '💡 <b style="color:var(--accent)">2回目からはプロンプト不要にできます</b><br>'+
    'Claudeアプリで<b>プロジェクトを1つ作り</b>、このプロンプトを「プロジェクトの指示」に貼っておく。'+
-   'あとはそのプロジェクトに<b>写真を送るだけ</b>でJSONが返ってきます。毎回コピーしなくて済みます。</div>'+
-  '<button class="ghost" style="width:100%;margin-top:10px" onclick="copyText(AI_PROMPT)">プロンプトをコピー</button>'+
+   'あとはそのプロジェクトに<b>写真を送るだけ</b>でJSONが返ってきます。毎回コピーしなくて済みます。<br>'+
+   '<span class="muted">↑の「プロジェクトの指示をコピー」は、常設の指示として書き直したものです。こちらを貼ってください。</span></div>'+
+  '<button class="ghost" style="width:100%;margin-top:10px" onclick="copyText(AI_PROMPT)">プロンプトをコピー（毎回貼る用）</button>'+
+  '<button class="ghost" style="width:100%;margin-top:8px" onclick="copyText(AI_PROJECT_PROMPT)">プロジェクトの指示をコピー（1回だけ設定する用）</button>'+
   '<textarea id="aijson" style="width:100%;height:150px;font-size:13px;line-height:1.6;padding:10px;margin-top:10px" '+
    'placeholder=\'{"items":[{"n":"鶏の唐揚げ 5個","k":520,...}],"note":"..."}\'></textarea>'+
   '<div class="row" style="gap:8px;margin-top:8px">'+
